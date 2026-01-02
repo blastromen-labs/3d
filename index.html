@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Visualization Controls</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #030317;
+            color: #0fff83;
+            font-family: 'Courier New', monospace;
+            display: grid;
+            grid-template-columns: auto 300px 300px;
+            grid-template-rows: auto auto;
+            gap: 20px;
+        }
+
+        #game {
+            border: 2px solid #0fff83;
+            grid-row: 1 / 3;
+            grid-column: 1;
+        }
+
+        .controls {
+            background: #1a1a1a;
+            padding: 20px;
+            border: 2px solid #0fff83;
+            border-radius: 8px;
+            height: fit-content;
+            grid-column: 2;
+            grid-row: 1 / 3;
+        }
+
+        .model-controls {
+            background: #1a1a1a;
+            padding: 20px;
+            border: 2px solid #0fff83;
+            border-radius: 8px;
+            height: fit-content;
+            grid-column: 3;
+            grid-row: 1;
+        }
+
+        .appearance-controls {
+            background: #1a1a1a;
+            padding: 20px;
+            border: 2px solid #0fff83;
+            border-radius: 8px;
+            height: fit-content;
+            grid-column: 3;
+            grid-row: 2;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: #2a2a2a;
+            outline: none;
+            border-radius: 3px;
+        }
+
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #0fff83;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        .control-group input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #0fff83;
+            cursor: pointer;
+            border-radius: 50%;
+            border: none;
+        }
+
+        .value-display {
+            display: inline-block;
+            margin-left: 10px;
+            font-size: 12px;
+            color: #0fff83;
+        }
+
+        .control-group select {
+            width: 100%;
+            padding: 8px;
+            background: #2a2a2a;
+            color: #0fff83;
+            border: 1px solid #0fff83;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #2a2a2a;
+            color: #0fff83;
+            border: 2px solid #0fff83;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #0fff83;
+            color: #101010;
+        }
+
+        h2 {
+            margin-top: 0;
+            border-bottom: 2px solid #0fff83;
+            padding-bottom: 10px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: #1a1a1a;
+            border: 2px solid #0fff83;
+            border-radius: 8px;
+            padding: 20px;
+            width: 80%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+            color: #0fff83;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 300px;
+            background: #0a0a0a;
+            color: #0fff83;
+            border: 1px solid #0fff83;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            resize: vertical;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            margin-top: 0;
+        }
+
+        .error-message {
+            color: #0fff83;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="game"></canvas>
+
+    <div class="controls">
+        <h2>3D Controls</h2>
+
+        <div class="control-group">
+            <label>
+                X-Axis Spin Speed
+                <span class="value-display" id="speedXValue">0.10x</span>
+            </label>
+            <input type="range" id="speedXSlider" min="-5" max="5" step="0.1" value="0.1">
+        </div>
+
+        <div class="control-group">
+            <label>
+                Y-Axis Spin Speed
+                <span class="value-display" id="speedYValue">0.10x</span>
+            </label>
+            <input type="range" id="speedYSlider" min="-5" max="5" step="0.1" value="0.1">
+        </div>
+
+        <div class="control-group">
+            <label>
+                Z-Axis Spin Speed
+                <span class="value-display" id="speedZValue">0.00x</span>
+            </label>
+            <input type="range" id="speedZSlider" min="-5" max="5" step="0.1" value="0">
+        </div>
+
+        <div class="control-group">
+            <label>
+                X-Axis Angle
+                <span class="value-display" id="angleXValue">0°</span>
+            </label>
+            <input type="range" id="angleXSlider" min="0" max="360" step="1" value="0">
+        </div>
+
+        <div class="control-group">
+            <label>
+                Y-Axis Angle
+                <span class="value-display" id="angleYValue">0°</span>
+            </label>
+            <input type="range" id="angleYSlider" min="0" max="360" step="1" value="0">
+        </div>
+
+        <div class="control-group">
+            <label>
+                Z-Axis Angle
+                <span class="value-display" id="angleZValue">0°</span>
+            </label>
+            <input type="range" id="angleZSlider" min="0" max="360" step="1" value="0">
+        </div>
+
+        <div class="control-group">
+            <label>
+                Zoom (Depth)
+                <span class="value-display" id="zoomValue">1.00</span>
+            </label>
+            <input type="range" id="zoomSlider" min="0.5" max="5" step="0.1" value="1">
+        </div>
+
+        <div class="control-group">
+            <label>Render Mode</label>
+            <button id="solidToggle" style="margin-top: 0;">Solid</button>
+        </div>
+
+        <button id="resetBtn">Reset All</button>
+    </div>
+
+    <div class="model-controls">
+        <h2>Model Editor</h2>
+
+        <div class="control-group">
+            <label>Select Preset</label>
+            <select id="modelPreset">
+                <option value="penguin">Penguin</option>
+                <option value="cube">Cube</option>
+                <option value="pyramid">Pyramid</option>
+                <option value="custom">Custom</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label>Edit Model</label>
+            <button id="editModelBtn" style="margin-top: 0;">Edit Current Model</button>
+            <button id="savePresetBtn" style="margin-top: 5px;">Save as Preset</button>
+        </div>
+    </div>
+
+    <div class="appearance-controls">
+        <h2>Appearance</h2>
+
+        <div class="control-group">
+            <label>
+                Line Thickness
+                <span class="value-display" id="thicknessValue">1.0px</span>
+            </label>
+            <input type="range" id="thicknessSlider" min="1" max="10" step="0.5" value="1">
+        </div>
+
+        <div class="control-group">
+            <label>Object Color</label>
+            <input type="color" id="colorPicker" value="#FF0F77"
+                style="width: 100%; height: 40px; cursor: pointer; background: #2a2a2a; border: 2px solid #0fff83; border-radius: 4px;">
+        </div>
+
+        <div class="control-group">
+            <label>Stroke Color (Solid Mode)</label>
+            <input type="color" id="strokeColorPicker" value="#0a0a0a"
+                style="width: 100%; height: 40px; cursor: pointer; background: #2a2a2a; border: 2px solid #0fff83; border-radius: 4px;">
+        </div>
+
+        <div class="control-group">
+            <label>
+                Lighting Contrast
+                <span class="value-display" id="contrastValue">70%</span>
+            </label>
+            <input type="range" id="contrastSlider" min="0" max="100" step="1" value="70">
+        </div>
+
+        <div class="control-group">
+            <label>Background Color</label>
+            <input type="color" id="backgroundPicker" value="#030317"
+                style="width: 100%; height: 40px; cursor: pointer; background: #2a2a2a; border: 2px solid #0fff83; border-radius: 4px;">
+        </div>
+
+        <div class="control-group">
+            <label>Parallax Stars</label>
+            <button id="starsToggle" style="margin-top: 0;">On</button>
+        </div>
+
+        <div class="control-group">
+            <label>
+                Star Speed
+                <span class="value-display" id="starSpeedValue">0.3x</span>
+            </label>
+            <input type="range" id="starSpeedSlider" min="0" max="5" step="0.1" value="0.3">
+        </div>
+    </div>
+
+    <!-- Model Editor Modal -->
+    <div id="modelEditorModal" class="modal">
+        <div class="modal-content">
+            <h3>Custom Model Editor</h3>
+            <p style="font-size: 12px; color: #999;">Edit vertices (vs) and faces (fs) in JSON format. Each vertex has
+                x, y, z coordinates. Each face is an array of vertex indices.</p>
+            <textarea id="modelJsonEditor" spellcheck="false"></textarea>
+            <div class="error-message" id="jsonError"></div>
+            <div class="modal-buttons">
+                <button id="applyModelBtn">Apply Model</button>
+                <button id="cancelModelBtn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="presets.js"></script>
+    <script src="index.js"></script>
+</body>
+
+</html>
