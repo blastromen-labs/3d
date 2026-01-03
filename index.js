@@ -7,7 +7,7 @@ game.height = 800
 const ctx = game.getContext("2d")
 console.log(ctx)
 
-// Access presets from globally loaded presets.js
+// Access presets from globally loaded presets.js.
 const modelPresets = MODEL_PRESETS;
 
 // Current model being rendered (starts with penguin)
