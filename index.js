@@ -234,7 +234,13 @@ let config = {
     strokeColor: '#0a0a0a',
     contrast: 70,
     starsEnabled: true,
-    starSpeed: 0.3
+    starSpeed: 0.3,
+    zoomAutoEnabled: false,
+    zoomMin: 0.8,
+    zoomMax: 1.5,
+    zoomSpeed: 1.0,
+    zoomAutoTime: 0,
+    zoomAutoDirection: 1
 };
 
 let dz = 1;
@@ -303,6 +309,10 @@ const angleXSlider = document.getElementById('angleXSlider');
 const angleYSlider = document.getElementById('angleYSlider');
 const angleZSlider = document.getElementById('angleZSlider');
 const zoomSlider = document.getElementById('zoomSlider');
+const zoomAutoToggle = document.getElementById('zoomAutoToggle');
+const zoomMinSlider = document.getElementById('zoomMinSlider');
+const zoomMaxSlider = document.getElementById('zoomMaxSlider');
+const zoomSpeedSlider = document.getElementById('zoomSpeedSlider');
 const solidToggle = document.getElementById('solidToggle');
 const thicknessSlider = document.getElementById('thicknessSlider');
 const colorPicker = document.getElementById('colorPicker');
@@ -328,6 +338,9 @@ const angleXValue = document.getElementById('angleXValue');
 const angleYValue = document.getElementById('angleYValue');
 const angleZValue = document.getElementById('angleZValue');
 const zoomValue = document.getElementById('zoomValue');
+const zoomMinValue = document.getElementById('zoomMinValue');
+const zoomMaxValue = document.getElementById('zoomMaxValue');
+const zoomSpeedValue = document.getElementById('zoomSpeedValue');
 const thicknessValue = document.getElementById('thicknessValue');
 const contrastValue = document.getElementById('contrastValue');
 const starSpeedValue = document.getElementById('starSpeedValue');
@@ -375,6 +388,49 @@ angleZSlider.addEventListener('input', (e) => {
 zoomSlider.addEventListener('input', (e) => {
     config.zoom = parseFloat(e.target.value);
     zoomValue.textContent = config.zoom.toFixed(2);
+    // Disable auto zoom when manually adjusting
+    if (config.zoomAutoEnabled) {
+        config.zoomAutoEnabled = false;
+        zoomAutoToggle.textContent = 'Off';
+    }
+});
+
+// Zoom automation toggle
+zoomAutoToggle.addEventListener('click', () => {
+    config.zoomAutoEnabled = !config.zoomAutoEnabled;
+    zoomAutoToggle.textContent = config.zoomAutoEnabled ? 'On' : 'Off';
+    if (config.zoomAutoEnabled) {
+        config.zoomAutoTime = 0;
+        config.zoomAutoDirection = 1;
+    }
+});
+
+// Zoom min control
+zoomMinSlider.addEventListener('input', (e) => {
+    config.zoomMin = parseFloat(e.target.value);
+    // Ensure min doesn't exceed max
+    if (config.zoomMin > config.zoomMax) {
+        config.zoomMin = config.zoomMax;
+        zoomMinSlider.value = config.zoomMin;
+    }
+    zoomMinValue.textContent = config.zoomMin.toFixed(2);
+});
+
+// Zoom max control
+zoomMaxSlider.addEventListener('input', (e) => {
+    config.zoomMax = parseFloat(e.target.value);
+    // Ensure max doesn't go below min
+    if (config.zoomMax < config.zoomMin) {
+        config.zoomMax = config.zoomMin;
+        zoomMaxSlider.value = config.zoomMax;
+    }
+    zoomMaxValue.textContent = config.zoomMax.toFixed(2);
+});
+
+// Zoom speed control
+zoomSpeedSlider.addEventListener('input', (e) => {
+    config.zoomSpeed = parseFloat(e.target.value);
+    zoomSpeedValue.textContent = config.zoomSpeed.toFixed(1) + 'x';
 });
 
 // Solid/Wireframe toggle
@@ -435,6 +491,9 @@ loadModel('penguin');
 speedXValue.textContent = config.speedX.toFixed(2) + 'x';
 speedYValue.textContent = config.speedY.toFixed(2) + 'x';
 speedZValue.textContent = config.speedZ.toFixed(2) + 'x';
+zoomMinValue.textContent = config.zoomMin.toFixed(2);
+zoomMaxValue.textContent = config.zoomMax.toFixed(2);
+zoomSpeedValue.textContent = config.zoomSpeed.toFixed(1) + 'x';
 thicknessValue.textContent = config.wireframeThickness.toFixed(1) + 'px';
 contrastValue.textContent = config.contrast.toFixed(0) + '%';
 starSpeedValue.textContent = config.starSpeed.toFixed(1) + 'x';
@@ -442,6 +501,12 @@ starSpeedValue.textContent = config.starSpeed.toFixed(1) + 'x';
 // Mouse wheel zoom on canvas
 game.addEventListener('wheel', (e) => {
     e.preventDefault(); // Prevent page scrolling
+
+    // Disable zoom automation when manually zooming
+    if (config.zoomAutoEnabled) {
+        config.zoomAutoEnabled = false;
+        zoomAutoToggle.textContent = 'Off';
+    }
 
     // Adjust zoom based on wheel direction
     // deltaY > 0 = scroll down = zoom out
@@ -627,6 +692,12 @@ resetBtn.addEventListener('click', () => {
     config.contrast = 70;
     config.starsEnabled = true;
     config.starSpeed = 0.3;
+    config.zoomAutoEnabled = false;
+    config.zoomMin = 0.8;
+    config.zoomMax = 1.5;
+    config.zoomSpeed = 1.0;
+    config.zoomAutoTime = 0;
+    config.zoomAutoDirection = 1;
 
     speedXSlider.value = 0.1;
     speedYSlider.value = 0.1;
@@ -635,6 +706,10 @@ resetBtn.addEventListener('click', () => {
     angleYSlider.value = 0;
     angleZSlider.value = 0;
     zoomSlider.value = 1.0;
+    zoomAutoToggle.textContent = 'Off';
+    zoomMinSlider.value = 0.8;
+    zoomMaxSlider.value = 1.5;
+    zoomSpeedSlider.value = 1.0;
     thicknessSlider.value = 1.0;
     colorPicker.value = '#FF0F77';
     strokeColorPicker.value = '#0a0a0a';
@@ -652,6 +727,9 @@ resetBtn.addEventListener('click', () => {
     angleYValue.textContent = '0°';
     angleZValue.textContent = '0°';
     zoomValue.textContent = '1.00';
+    zoomMinValue.textContent = '0.80';
+    zoomMaxValue.textContent = '1.50';
+    zoomSpeedValue.textContent = '1.0x';
     thicknessValue.textContent = '1.0px';
     contrastValue.textContent = '70%';
     starSpeedValue.textContent = '0.3x';
@@ -671,6 +749,21 @@ function frame() {
     const currentAngleX = config.angleX + config.autoRotationX;
     const currentAngleY = config.angleY + config.autoRotationY;
     const currentAngleZ = config.angleZ + config.autoRotationZ;
+
+    // Update zoom automation
+    if (config.zoomAutoEnabled) {
+        // Increment time based on speed
+        config.zoomAutoTime += dt * config.zoomSpeed;
+
+        // Use sine wave for smooth oscillation
+        // Map sine (-1 to 1) to zoom range (min to max)
+        const sineValue = Math.sin(config.zoomAutoTime * Math.PI);
+        config.zoom = config.zoomMin + (config.zoomMax - config.zoomMin) * (sineValue + 1) / 2;
+
+        // Update UI
+        zoomSlider.value = config.zoom;
+        zoomValue.textContent = config.zoom.toFixed(2);
+    }
 
     // Update zoom
     dz = config.zoom;

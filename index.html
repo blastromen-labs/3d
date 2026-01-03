@@ -257,6 +257,35 @@
         </div>
 
         <div class="control-group">
+            <label>Zoom Automation</label>
+            <button id="zoomAutoToggle" style="margin-top: 0;">Off</button>
+        </div>
+
+        <div class="control-group">
+            <label>
+                Min Zoom
+                <span class="value-display" id="zoomMinValue">0.80</span>
+            </label>
+            <input type="range" id="zoomMinSlider" min="0.5" max="5" step="0.1" value="0.8">
+        </div>
+
+        <div class="control-group">
+            <label>
+                Max Zoom
+                <span class="value-display" id="zoomMaxValue">1.50</span>
+            </label>
+            <input type="range" id="zoomMaxSlider" min="0.5" max="5" step="0.1" value="1.5">
+        </div>
+
+        <div class="control-group">
+            <label>
+                Zoom Speed
+                <span class="value-display" id="zoomSpeedValue">1.0x</span>
+            </label>
+            <input type="range" id="zoomSpeedSlider" min="0.1" max="5" step="0.1" value="1">
+        </div>
+
+        <div class="control-group">
             <label>Render Mode</label>
             <button id="solidToggle" style="margin-top: 0;">Solid</button>
         </div>
