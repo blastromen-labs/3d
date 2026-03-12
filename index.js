@@ -163,10 +163,16 @@ function screen(p) {
     }
 }
 
+function fovToFocal(degrees) {
+    return 1 / Math.tan((degrees * Math.PI / 180) / 2);
+}
+
+let focalLength = fovToFocal(60);
+
 function project({ x, y, z }) {
     return {
-        x: x / z,
-        y: y / z,
+        x: x * focalLength / z,
+        y: y * focalLength / z,
     }
 }
 
@@ -232,7 +238,9 @@ let config = {
     autoRotationZ: 0,
     solidMode: false,
     wireframeThickness: 10.0,
-    wireframeColor: '#ff0000',
+    colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00'],
+    colorCount: 1,
+    gradientEnabled: false,
     strokeColor: '#000000',
     contrast: 70,
     starsEnabled: false,
@@ -242,10 +250,17 @@ let config = {
     zoomMax: 1.5,
     zoomSpeed: 1.0,
     zoomAutoTime: 0,
-    zoomAutoDirection: 1
+    zoomAutoDirection: 1,
+    fov: 60,
+    offsetY: 0,
+    offsetYAutoEnabled: false,
+    offsetYMin: -0.5,
+    offsetYMax: 0.5,
+    offsetYSpeed: 1.0,
+    offsetYAutoTime: 0,
 };
 
-let dz = 1;
+let dz = focalLength;
 
 // Star field system
 const stars = [];
@@ -315,9 +330,27 @@ const zoomAutoToggle = document.getElementById('zoomAutoToggle');
 const zoomMinSlider = document.getElementById('zoomMinSlider');
 const zoomMaxSlider = document.getElementById('zoomMaxSlider');
 const zoomSpeedSlider = document.getElementById('zoomSpeedSlider');
+const fovSlider = document.getElementById('fovSlider');
+const offsetYSlider = document.getElementById('offsetYSlider');
+const offsetYAutoToggle = document.getElementById('offsetYAutoToggle');
+const offsetYMinSlider = document.getElementById('offsetYMinSlider');
+const offsetYMaxSlider = document.getElementById('offsetYMaxSlider');
+const offsetYSpeedSlider = document.getElementById('offsetYSpeedSlider');
 const solidToggle = document.getElementById('solidToggle');
 const thicknessSlider = document.getElementById('thicknessSlider');
-const colorPicker = document.getElementById('colorPicker');
+const colorPickers = [
+    document.getElementById('colorPicker1'),
+    document.getElementById('colorPicker2'),
+    document.getElementById('colorPicker3'),
+    document.getElementById('colorPicker4'),
+];
+const colorGroups = [
+    document.getElementById('color1Group'),
+    document.getElementById('color2Group'),
+    document.getElementById('color3Group'),
+    document.getElementById('color4Group'),
+];
+const gradientToggle = document.getElementById('gradientToggle');
 const strokeColorPicker = document.getElementById('strokeColorPicker');
 const contrastSlider = document.getElementById('contrastSlider');
 const backgroundPicker = document.getElementById('backgroundPicker');
@@ -343,6 +376,11 @@ const zoomValue = document.getElementById('zoomValue');
 const zoomMinInput = document.getElementById('zoomMinInput');
 const zoomMaxInput = document.getElementById('zoomMaxInput');
 const zoomSpeedValue = document.getElementById('zoomSpeedValue');
+const fovValue = document.getElementById('fovValue');
+const offsetYValueEl = document.getElementById('offsetYValue');
+const offsetYMinInput = document.getElementById('offsetYMinInput');
+const offsetYMaxInput = document.getElementById('offsetYMaxInput');
+const offsetYSpeedValue = document.getElementById('offsetYSpeedValue');
 const thicknessValue = document.getElementById('thicknessValue');
 const contrastValue = document.getElementById('contrastValue');
 const starSpeedValue = document.getElementById('starSpeedValue');
@@ -439,6 +477,61 @@ zoomSpeedSlider.addEventListener('input', (e) => {
     zoomSpeedValue.textContent = config.zoomSpeed.toFixed(1) + 'x';
 });
 
+// FOV control
+fovSlider.addEventListener('input', (e) => {
+    config.fov = parseFloat(e.target.value);
+    fovValue.textContent = config.fov + '°';
+});
+
+// Y Position control
+offsetYSlider.addEventListener('input', (e) => {
+    config.offsetY = parseFloat(e.target.value);
+    offsetYValueEl.textContent = config.offsetY.toFixed(2);
+    if (config.offsetYAutoEnabled) {
+        config.offsetYAutoEnabled = false;
+        offsetYAutoToggle.textContent = 'Off';
+    }
+});
+
+// Y Position automation toggle
+offsetYAutoToggle.addEventListener('click', () => {
+    config.offsetYAutoEnabled = !config.offsetYAutoEnabled;
+    offsetYAutoToggle.textContent = config.offsetYAutoEnabled ? 'On' : 'Off';
+    if (config.offsetYAutoEnabled) {
+        config.offsetYAutoTime = 0;
+    }
+});
+
+// Y Position min control (slider + input synced)
+function updateOffsetYMin(val) {
+    config.offsetYMin = val;
+    if (config.offsetYMin > config.offsetYMax) {
+        config.offsetYMin = config.offsetYMax;
+    }
+    offsetYMinSlider.value = config.offsetYMin;
+    offsetYMinInput.value = config.offsetYMin.toFixed(2);
+}
+offsetYMinSlider.addEventListener('input', (e) => updateOffsetYMin(parseFloat(e.target.value)));
+offsetYMinInput.addEventListener('input', (e) => updateOffsetYMin(parseFloat(e.target.value) || -2));
+
+// Y Position max control (slider + input synced)
+function updateOffsetYMax(val) {
+    config.offsetYMax = val;
+    if (config.offsetYMax < config.offsetYMin) {
+        config.offsetYMax = config.offsetYMin;
+    }
+    offsetYMaxSlider.value = config.offsetYMax;
+    offsetYMaxInput.value = config.offsetYMax.toFixed(2);
+}
+offsetYMaxSlider.addEventListener('input', (e) => updateOffsetYMax(parseFloat(e.target.value)));
+offsetYMaxInput.addEventListener('input', (e) => updateOffsetYMax(parseFloat(e.target.value) || 2));
+
+// Y Position speed control
+offsetYSpeedSlider.addEventListener('input', (e) => {
+    config.offsetYSpeed = parseFloat(e.target.value);
+    offsetYSpeedValue.textContent = config.offsetYSpeed.toFixed(1) + 'x';
+});
+
 // Solid/Wireframe toggle
 solidToggle.addEventListener('click', () => {
     config.solidMode = !config.solidMode;
@@ -451,9 +544,32 @@ thicknessSlider.addEventListener('input', (e) => {
     thicknessValue.textContent = config.wireframeThickness.toFixed(1) + 'px';
 });
 
-// Wireframe color control
-colorPicker.addEventListener('input', (e) => {
-    config.wireframeColor = e.target.value;
+// Color pickers
+colorPickers.forEach((picker, i) => {
+    picker.addEventListener('input', (e) => {
+        config.colors[i] = e.target.value;
+    });
+});
+
+// Color count buttons
+function updateColorCount(count) {
+    config.colorCount = count;
+    colorGroups.forEach((g, i) => {
+        g.style.display = i < count ? '' : 'none';
+    });
+    document.querySelectorAll('.color-count-btn').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.count) === count);
+    });
+}
+
+document.querySelectorAll('.color-count-btn').forEach(btn => {
+    btn.addEventListener('click', () => updateColorCount(parseInt(btn.dataset.count)));
+});
+
+// Gradient toggle
+gradientToggle.addEventListener('click', () => {
+    config.gradientEnabled = !config.gradientEnabled;
+    gradientToggle.textContent = config.gradientEnabled ? 'On' : 'Off';
 });
 
 // Stroke color control
@@ -501,11 +617,18 @@ speedZValue.textContent = config.speedZ.toFixed(2) + 'x';
 zoomMinInput.value = config.zoomMin.toFixed(2);
 zoomMaxInput.value = config.zoomMax.toFixed(2);
 zoomSpeedValue.textContent = config.zoomSpeed.toFixed(1) + 'x';
+fovValue.textContent = config.fov + '°';
+offsetYValueEl.textContent = config.offsetY.toFixed(2);
+offsetYMinInput.value = config.offsetYMin.toFixed(2);
+offsetYMaxInput.value = config.offsetYMax.toFixed(2);
+offsetYSpeedValue.textContent = config.offsetYSpeed.toFixed(1) + 'x';
 thicknessValue.textContent = config.wireframeThickness.toFixed(1) + 'px';
 thicknessSlider.value = config.wireframeThickness;
 contrastValue.textContent = config.contrast.toFixed(0) + '%';
 starSpeedValue.textContent = config.starSpeed.toFixed(1) + 'x';
-colorPicker.value = config.wireframeColor;
+colorPickers.forEach((p, i) => p.value = config.colors[i]);
+updateColorCount(config.colorCount);
+gradientToggle.textContent = config.gradientEnabled ? 'On' : 'Off';
 strokeColorPicker.value = config.strokeColor;
 backgroundPicker.value = BACKGROUND;
 solidToggle.textContent = 'Wireframe';
@@ -700,7 +823,9 @@ resetBtn.addEventListener('click', () => {
     config.autoRotationZ = 0;
     config.solidMode = false;
     config.wireframeThickness = 10.0;
-    config.wireframeColor = '#ff0000';
+    config.colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00'];
+    config.colorCount = 1;
+    config.gradientEnabled = false;
     config.strokeColor = '#000000';
     config.contrast = 70;
     config.starsEnabled = false;
@@ -711,6 +836,13 @@ resetBtn.addEventListener('click', () => {
     config.zoomSpeed = 1.0;
     config.zoomAutoTime = 0;
     config.zoomAutoDirection = 1;
+    config.fov = 60;
+    config.offsetY = 0;
+    config.offsetYAutoEnabled = false;
+    config.offsetYMin = -0.5;
+    config.offsetYMax = 0.5;
+    config.offsetYSpeed = 1.0;
+    config.offsetYAutoTime = 0;
 
     speedXSlider.value = 0.1;
     speedYSlider.value = 0.1;
@@ -723,8 +855,19 @@ resetBtn.addEventListener('click', () => {
     zoomMinSlider.value = 0.8;
     zoomMaxSlider.value = 1.5;
     zoomSpeedSlider.value = 1.0;
+    fovSlider.value = 60;
+    offsetYSlider.value = 0;
+    offsetYAutoToggle.textContent = 'Off';
+    offsetYMinSlider.value = -0.5;
+    offsetYMaxSlider.value = 0.5;
+    offsetYSpeedSlider.value = 1.0;
     thicknessSlider.value = 10.0;
-    colorPicker.value = '#ff0000';
+    colorPickers[0].value = '#ff0000';
+    colorPickers[1].value = '#00ff00';
+    colorPickers[2].value = '#0000ff';
+    colorPickers[3].value = '#ffff00';
+    updateColorCount(1);
+    gradientToggle.textContent = 'Off';
     strokeColorPicker.value = '#000000';
     contrastSlider.value = 70;
     backgroundPicker.value = '#000000';
@@ -743,13 +886,18 @@ resetBtn.addEventListener('click', () => {
     zoomMinInput.value = '0.80';
     zoomMaxInput.value = '1.50';
     zoomSpeedValue.textContent = '1.0x';
+    fovValue.textContent = '60°';
+    offsetYValueEl.textContent = '0.00';
+    offsetYMinInput.value = '-0.50';
+    offsetYMaxInput.value = '0.50';
+    offsetYSpeedValue.textContent = '1.0x';
     thicknessValue.textContent = '10.0px';
     contrastValue.textContent = '70%';
     starSpeedValue.textContent = '0.3x';
     loadModel('cube');
     modelPresetSelect.value = 'cube';
 
-    dz = 1;
+    dz = fovToFocal(60);
 });
 
 // Initialize USB LED streaming
@@ -760,23 +908,37 @@ USBStream.initControls(game, () => {
 // Initialize sequencer
 Sequencer.initUI();
 
-function frame() {
-    const dt = 1 / FPS;
+function getEffectiveColors() {
+    return config.colors.slice(0, config.colorCount).map(c => Sequencer.getColorBlend(c));
+}
 
-    // Update sequencer modulations
+function createFaceGradient(screenPoints, colors, brightness, contrast) {
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const p of screenPoints) {
+        if (p.x < minX) minX = p.x;
+        if (p.y < minY) minY = p.y;
+        if (p.x > maxX) maxX = p.x;
+        if (p.y > maxY) maxY = p.y;
+    }
+    const grad = ctx.createLinearGradient(minX, minY, maxX, maxY);
+    for (let i = 0; i < colors.length; i++) {
+        const stop = colors.length === 1 ? 0 : i / (colors.length - 1);
+        grad.addColorStop(stop, brightnessToColor(brightness, colors[i], contrast));
+    }
+    return grad;
+}
+
+function renderScene(dt) {
     Sequencer.updateModulations(dt);
 
-    // Update auto-rotation angles for each axis (with sequencer modulation)
     config.autoRotationX += Math.PI * dt * (config.speedX + Sequencer.getModOffset('speedX'));
     config.autoRotationY += Math.PI * dt * (config.speedY + Sequencer.getModOffset('speedY'));
     config.autoRotationZ += Math.PI * dt * (config.speedZ + Sequencer.getModOffset('speedZ'));
 
-    // Combine base angles from sliders with auto-rotation and angle modulation
     const currentAngleX = config.angleX + config.autoRotationX + Sequencer.getModOffset('angleX');
     const currentAngleY = config.angleY + config.autoRotationY + Sequencer.getModOffset('angleY');
     const currentAngleZ = config.angleZ + config.autoRotationZ + Sequencer.getModOffset('angleZ');
 
-    // Update zoom automation
     if (config.zoomAutoEnabled) {
         config.zoomAutoTime += dt * config.zoomSpeed;
         const sineValue = Math.sin(config.zoomAutoTime * Math.PI);
@@ -785,18 +947,24 @@ function frame() {
         zoomValue.textContent = config.zoom.toFixed(2);
     }
 
-    // Update zoom with sequencer modulation (clamp to prevent camera clipping)
-    dz = Math.max(0.05, config.zoom + Sequencer.getModOffset('zoom'));
+    focalLength = fovToFocal(config.fov);
+    dz = Math.max(0.05, config.zoom + Sequencer.getModOffset('zoom')) * focalLength;
 
-    // Update star positions
+    if (config.offsetYAutoEnabled) {
+        config.offsetYAutoTime += dt * config.offsetYSpeed;
+        const sineValue = Math.sin(config.offsetYAutoTime * Math.PI);
+        config.offsetY = config.offsetYMin + (config.offsetYMax - config.offsetYMin) * (sineValue + 1) / 2;
+        offsetYSlider.value = config.offsetY;
+        offsetYValueEl.textContent = config.offsetY.toFixed(2);
+    }
+
+    const dy = config.offsetY + Sequencer.getModOffset('offsetY');
+
     updateStars(dt);
-
     clear();
-
-    // Draw stars behind 3D object
     drawStars();
 
-    const effectiveColor = Sequencer.getColorBlend(config.wireframeColor);
+    const effectiveColors = getEffectiveColors();
     const solidAmount = config.solidMode ? 1 : Sequencer.getSolidAmount();
     const distortAmt = Sequencer.getDistortAmount();
     const dNoise = Sequencer.distortNoise;
@@ -852,7 +1020,8 @@ function frame() {
             facesWithDepth.push({
                 vertices: transformedVertices,
                 depth: center.z,
-                color: brightnessToColor(brightness, effectiveColor, config.contrast),
+                brightness: brightness,
+                faceIndex: facesWithDepth.length,
                 normal: normal
             });
         }
@@ -860,14 +1029,28 @@ function frame() {
         facesWithDepth.sort((a, b) => b.depth - a.depth);
 
         for (const face of facesWithDepth) {
-            const screenPoints = face.vertices.map(v => screen(project(v)));
+            const screenPoints = face.vertices.map(v => {
+                const p = project(v);
+                p.y += dy;
+                return screen(p);
+            });
+
+            let faceColor;
+            if (config.gradientEnabled && effectiveColors.length > 1) {
+                faceColor = createFaceGradient(screenPoints, effectiveColors, face.brightness, config.contrast);
+            } else {
+                const ci = face.faceIndex % effectiveColors.length;
+                faceColor = brightnessToColor(face.brightness, effectiveColors[ci], config.contrast);
+            }
+
             ctx.globalAlpha = solidAmount;
-            polygon(screenPoints, face.color, config.strokeColor, config.wireframeThickness, true, solidAmount >= 1);
+            polygon(screenPoints, faceColor, config.strokeColor, config.wireframeThickness, true, solidAmount >= 1);
             ctx.globalAlpha = 1;
         }
     }
 
     if (solidAmount < 1) {
+        let edgeIdx = 0;
         for (const f of currentModel.fs) {
             for (let i = 0; i < f.length; ++i) {
                 const a = getVertex(f[i]);
@@ -879,16 +1062,45 @@ function frame() {
                 const tA = translate_z(rotatedA, dz);
                 const tB = translate_z(rotatedB, dz);
 
-                if (tA.z <= 0.01 || tB.z <= 0.01) continue;
+                if (tA.z <= 0.01 || tB.z <= 0.01) { edgeIdx++; continue; }
 
-                line(screen(project(tA)),
-                    screen(project(tB)),
-                    config.wireframeThickness,
-                    effectiveColor)
+                const pA = project(tA);
+                const pB = project(tB);
+                pA.y += dy;
+                pB.y += dy;
+
+                const sA = screen(pA);
+                const sB = screen(pB);
+
+                let lineColor;
+                if (config.gradientEnabled && effectiveColors.length > 1) {
+                    const grad = ctx.createLinearGradient(sA.x, sA.y, sB.x, sB.y);
+                    for (let c = 0; c < effectiveColors.length; c++) {
+                        grad.addColorStop(c / (effectiveColors.length - 1), effectiveColors[c]);
+                    }
+                    lineColor = grad;
+                } else {
+                    lineColor = effectiveColors[edgeIdx % effectiveColors.length];
+                }
+
+                line(sA, sB, config.wireframeThickness, lineColor);
+                edgeIdx++;
             }
         }
     }
+}
 
+let renderLoopActive = true;
+
+function frame() {
+    if (!renderLoopActive) return;
+    renderScene(1 / FPS);
     setTimeout(frame, 1000 / FPS);
 }
+
+window.renderScene = renderScene;
+window.getConfig = () => config;
+window.stopRenderLoop = () => { renderLoopActive = false; };
+window.startRenderLoop = () => { renderLoopActive = true; setTimeout(frame, 1000 / FPS); };
+
 setTimeout(frame, 1000 / FPS);

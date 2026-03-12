@@ -229,6 +229,25 @@ textarea {
     display: none;
 }
 
+/* Color count buttons */
+.color-count-btns {
+    display: flex;
+    gap: 4px;
+}
+
+.color-count-btn {
+    width: auto !important;
+    flex: 1;
+    padding: 6px 0 !important;
+    margin-top: 0 !important;
+    font-size: var(--font-size-sm) !important;
+}
+
+.color-count-btn.active {
+    background: var(--color-primary);
+    color: var(--color-text-dark);
+}
+
 /* Sequencer */
 .sequencer-controls {
     background: var(--color-bg-panel);
@@ -471,6 +490,84 @@ textarea {
     border-radius: 3px;
     background: var(--color-bg-input);
     cursor: pointer;
+}
+
+/* Export to BIN */
+.export-controls {
+    background: var(--color-bg-panel);
+    padding: var(--spacing-lg);
+    border: var(--border-width) solid var(--color-primary);
+    border-radius: var(--border-radius-lg);
+    grid-column: 1 / -1;
+    grid-row: 5;
+}
+
+.export-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.export-row .seq-param input[type="number"] {
+    width: 55px;
+}
+
+.export-info-text {
+    font-size: var(--font-size-sm);
+    color: #888;
+    font-family: var(--font-mono);
+}
+
+.export-btn {
+    width: auto !important;
+    padding: 8px 20px !important;
+    margin-top: 0 !important;
+    font-weight: bold;
+    background: var(--color-primary) !important;
+    color: var(--color-text-dark) !important;
+    border-color: var(--color-primary) !important;
+}
+
+.export-btn:hover {
+    opacity: 0.85;
+}
+
+.export-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.export-progress {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.export-progress-bar {
+    flex: 1;
+    height: 8px;
+    background: var(--color-bg-input);
+    border-radius: var(--border-radius-sm);
+    overflow: hidden;
+    border: 1px solid #444;
+}
+
+.export-progress-fill {
+    height: 100%;
+    width: 0;
+    background: var(--color-primary);
+    border-radius: var(--border-radius-sm);
+    transition: width 100ms ease;
+}
+
+.export-progress-text {
+    font-size: var(--font-size-sm);
+    color: var(--color-primary);
+    font-family: var(--font-mono);
+    min-width: 40px;
+    text-align: right;
 }
 
 /* USB LED Stream Panel */

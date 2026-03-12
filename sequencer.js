@@ -42,6 +42,7 @@ const Sequencer = (() => {
     const MOD_TARGETS = [
         { id: 'none', label: 'None' },
         { id: 'zoom', label: 'Zoom' },
+        { id: 'offsetY', label: 'Y Position' },
         { id: 'speedX', label: 'X Spin' },
         { id: 'speedY', label: 'Y Spin' },
         { id: 'speedZ', label: 'Z Spin' },
@@ -676,6 +677,44 @@ const Sequencer = (() => {
         updatePageButtons();
     }
 
+    function triggerStepSilent(stepIdx) {
+        for (const track of tracks) {
+            if (track.steps[stepIdx]) {
+                if (track.modTarget !== 'none') track.currentMod = track.modAmount;
+                if (track.colorModEnabled) track.colorEnvelope = 1;
+                if (track.solidModEnabled) track.solidEnvelope = 1;
+                if (track.distortModEnabled) track.distortEnvelope = 1;
+            }
+        }
+    }
+
+    function resetModulations() {
+        for (const track of tracks) {
+            track.currentMod = 0;
+            track.colorEnvelope = 0;
+            track.solidEnvelope = 0;
+            track.distortEnvelope = 0;
+        }
+    }
+
+    function saveModState() {
+        return tracks.map(t => ({
+            currentMod: t.currentMod,
+            colorEnvelope: t.colorEnvelope,
+            solidEnvelope: t.solidEnvelope,
+            distortEnvelope: t.distortEnvelope,
+        }));
+    }
+
+    function restoreModState(saved) {
+        tracks.forEach((t, i) => {
+            t.currentMod = saved[i].currentMod;
+            t.colorEnvelope = saved[i].colorEnvelope;
+            t.solidEnvelope = saved[i].solidEnvelope;
+            t.distortEnvelope = saved[i].distortEnvelope;
+        });
+    }
+
     return {
         initUI,
         updateModulations,
@@ -684,6 +723,13 @@ const Sequencer = (() => {
         getSolidAmount,
         getDistortAmount,
         distortNoise,
+        triggerStepSilent,
+        resetModulations,
+        saveModState,
+        restoreModState,
         get isPlaying() { return isPlaying; },
+        get tracks() { return tracks; },
+        get tempo() { return tempo; },
+        get totalSteps() { return totalSteps; },
     };
 })();
