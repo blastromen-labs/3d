@@ -238,6 +238,8 @@ let config = {
     autoRotationZ: 0,
     solidMode: false,
     wireframeThickness: 10.0,
+    thicknessScaleEnabled: false,
+    thicknessScaleAmount: 0.5,
     colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00'],
     colorCount: 1,
     gradientEnabled: false,
@@ -338,6 +340,10 @@ const offsetYMaxSlider = document.getElementById('offsetYMaxSlider');
 const offsetYSpeedSlider = document.getElementById('offsetYSpeedSlider');
 const solidToggle = document.getElementById('solidToggle');
 const thicknessSlider = document.getElementById('thicknessSlider');
+const thicknessScaleToggle = document.getElementById('thicknessScaleToggle');
+const thicknessScaleSlider = document.getElementById('thicknessScaleSlider');
+const thicknessScaleValue = document.getElementById('thicknessScaleValue');
+const thicknessScaleGroup = document.getElementById('thicknessScaleGroup');
 const colorPickers = [
     document.getElementById('colorPicker1'),
     document.getElementById('colorPicker2'),
@@ -542,6 +548,18 @@ solidToggle.addEventListener('click', () => {
 thicknessSlider.addEventListener('input', (e) => {
     config.wireframeThickness = parseFloat(e.target.value);
     thicknessValue.textContent = config.wireframeThickness.toFixed(1) + 'px';
+});
+
+// Thickness zoom-scaling controls
+thicknessScaleToggle.addEventListener('click', () => {
+    config.thicknessScaleEnabled = !config.thicknessScaleEnabled;
+    thicknessScaleToggle.textContent = config.thicknessScaleEnabled ? 'On' : 'Off';
+    thicknessScaleGroup.style.display = config.thicknessScaleEnabled ? '' : 'none';
+});
+
+thicknessScaleSlider.addEventListener('input', (e) => {
+    config.thicknessScaleAmount = parseFloat(e.target.value) / 100;
+    thicknessScaleValue.textContent = e.target.value + '%';
 });
 
 // Color pickers
@@ -823,6 +841,8 @@ resetBtn.addEventListener('click', () => {
     config.autoRotationZ = 0;
     config.solidMode = false;
     config.wireframeThickness = 10.0;
+    config.thicknessScaleEnabled = false;
+    config.thicknessScaleAmount = 0.5;
     config.colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00'];
     config.colorCount = 1;
     config.gradientEnabled = false;
@@ -862,6 +882,10 @@ resetBtn.addEventListener('click', () => {
     offsetYMaxSlider.value = 0.5;
     offsetYSpeedSlider.value = 1.0;
     thicknessSlider.value = 10.0;
+    thicknessScaleToggle.textContent = 'Off';
+    thicknessScaleSlider.value = 50;
+    thicknessScaleValue.textContent = '50%';
+    thicknessScaleGroup.style.display = 'none';
     colorPickers[0].value = '#ff0000';
     colorPickers[1].value = '#00ff00';
     colorPickers[2].value = '#0000ff';
@@ -960,6 +984,14 @@ function renderScene(dt) {
 
     const dy = config.offsetY + Sequencer.getModOffset('offsetY');
 
+    let effectiveThickness = config.wireframeThickness;
+    if (config.thicknessScaleEnabled) {
+        const baseDistance = fovToFocal(60);
+        const scaleFactor = baseDistance / dz;
+        const blended = 1 + (scaleFactor - 1) * config.thicknessScaleAmount;
+        effectiveThickness = Math.max(0.5, config.wireframeThickness * blended);
+    }
+
     updateStars(dt);
     clear();
     drawStars();
@@ -1044,7 +1076,7 @@ function renderScene(dt) {
             }
 
             ctx.globalAlpha = solidAmount;
-            polygon(screenPoints, faceColor, config.strokeColor, config.wireframeThickness, true, solidAmount >= 1);
+            polygon(screenPoints, faceColor, config.strokeColor, effectiveThickness, true, solidAmount >= 1);
             ctx.globalAlpha = 1;
         }
     }
@@ -1083,7 +1115,7 @@ function renderScene(dt) {
                     lineColor = effectiveColors[edgeIdx % effectiveColors.length];
                 }
 
-                line(sA, sB, config.wireframeThickness, lineColor);
+                line(sA, sB, effectiveThickness, lineColor);
                 edgeIdx++;
             }
         }
