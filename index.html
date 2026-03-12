@@ -101,7 +101,7 @@
 
         <div class="control-group">
             <label>Render Mode</label>
-            <button id="solidToggle" style="margin-top: 0;">Solid</button>
+            <button id="solidToggle" style="margin-top: 0;">Wireframe</button>
         </div>
 
         <button id="resetBtn">Reset All</button>
@@ -133,20 +133,20 @@
         <div class="control-group">
             <label>
                 Line Thickness
-                <span class="value-display" id="thicknessValue">1.0px</span>
+                <span class="value-display" id="thicknessValue">10.0px</span>
             </label>
-            <input type="range" id="thicknessSlider" min="1" max="10" step="0.5" value="1">
+            <input type="range" id="thicknessSlider" min="1" max="10" step="0.5" value="10">
         </div>
 
         <div class="control-group">
             <label>Object Color</label>
-            <input type="color" id="colorPicker" value="#FF0F77"
+            <input type="color" id="colorPicker" value="#ff0000"
                 style="width: 100%; height: 40px; cursor: pointer; background: #2a2a2a; border: 2px solid #0fff83; border-radius: 4px;">
         </div>
 
         <div class="control-group">
             <label>Stroke Color (Solid Mode)</label>
-            <input type="color" id="strokeColorPicker" value="#0a0a0a"
+            <input type="color" id="strokeColorPicker" value="#000000"
                 style="width: 100%; height: 40px; cursor: pointer; background: #2a2a2a; border: 2px solid #0fff83; border-radius: 4px;">
         </div>
 
@@ -160,13 +160,13 @@
 
         <div class="control-group">
             <label>Background Color</label>
-            <input type="color" id="backgroundPicker" value="#030317"
+            <input type="color" id="backgroundPicker" value="#000000"
                 style="width: 100%; height: 40px; cursor: pointer; background: #2a2a2a; border: 2px solid #0fff83; border-radius: 4px;">
         </div>
 
         <div class="control-group">
             <label>Parallax Stars</label>
-            <button id="starsToggle" style="margin-top: 0;">On</button>
+            <button id="starsToggle" style="margin-top: 0;">Off</button>
         </div>
 
         <div class="control-group">
@@ -238,6 +238,151 @@
         <button id="usbStreamBtn" disabled>Start Streaming</button>
     </div>
 
+    <div class="sequencer-controls">
+        <h2>Sequencer</h2>
+
+        <div class="seq-transport">
+            <button id="seqPlayBtn" class="seq-play-btn">Play</button>
+            <div class="seq-param">
+                <label>BPM</label>
+                <input type="number" id="seqTempo" value="120" min="20" max="300">
+            </div>
+            <div class="seq-param">
+                <label>Vol <span id="seqVolumeValue">80%</span></label>
+                <input type="range" id="seqVolume" min="0" max="1" step="0.05" value="0.8">
+            </div>
+            <div class="seq-param">
+                <label>Steps</label>
+                <div class="seq-btn-group">
+                    <button class="seq-steps-btn active" data-steps="16">16</button>
+                    <button class="seq-steps-btn" data-steps="32">32</button>
+                    <button class="seq-steps-btn" data-steps="64">64</button>
+                </div>
+            </div>
+            <div class="seq-param">
+                <label>Page</label>
+                <div class="seq-btn-group">
+                    <button class="seq-page-btn active" data-page="0">1</button>
+                    <button class="seq-page-btn" data-page="1" style="display:none">2</button>
+                    <button class="seq-page-btn" data-page="2" style="display:none">3</button>
+                    <button class="seq-page-btn" data-page="3" style="display:none">4</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="seq-sample-player">
+            <span class="seq-sample-label">Backtrack</span>
+            <label class="seq-file-btn">
+                Load
+                <input type="file" id="sampleFileInput" accept="audio/*" hidden>
+            </label>
+            <span class="seq-sample-name" id="sampleFileName">No file loaded</span>
+            <div class="seq-param">
+                <label>Vol <span id="sampleVolumeValue">80%</span></label>
+                <input type="range" id="sampleVolume" min="0" max="1" step="0.05" value="0.8">
+            </div>
+        </div>
+
+        <div class="seq-track">
+            <div class="seq-track-row">
+                <span class="seq-track-label" style="color:#ff6633">KICK</span>
+                <div class="seq-steps" id="seq-steps-kick"></div>
+            </div>
+            <div class="seq-mod-row">
+                <label>Mod</label>
+                <select id="seq-mod-target-kick"></select>
+                <label>Amt <span id="seq-mod-amount-val-kick">-0.30</span></label>
+                <input type="range" id="seq-mod-amount-kick" min="-2" max="2" step="0.05" value="-0.3">
+                <label>Return <span id="seq-mod-recovery-val-kick">0.50</span></label>
+                <input type="range" id="seq-mod-recovery-kick" min="0.05" max="1" step="0.05" value="0.5">
+                <span class="seq-mod-sep"></span>
+                <label>Color</label>
+                <button id="seq-color-toggle-kick" class="seq-color-toggle">Off</button>
+                <input type="color" id="seq-color-picker-kick" value="#ff2200" class="seq-color-picker">
+                <label>Fade <span id="seq-color-return-val-kick">0.30</span></label>
+                <input type="range" id="seq-color-return-kick" min="0.02" max="1" step="0.02" value="0.3">
+                <span class="seq-mod-sep"></span>
+                <label>Solid</label>
+                <button id="seq-solid-toggle-kick" class="seq-color-toggle">Off</button>
+                <label>Fade <span id="seq-solid-return-val-kick">0.30</span></label>
+                <input type="range" id="seq-solid-return-kick" min="0.02" max="1" step="0.02" value="0.3">
+                <span class="seq-mod-sep"></span>
+                <label>Distort</label>
+                <button id="seq-distort-toggle-kick" class="seq-color-toggle">Off</button>
+                <label>Amt <span id="seq-distort-amount-val-kick">0.15</span></label>
+                <input type="range" id="seq-distort-amount-kick" min="0.02" max="0.5" step="0.01" value="0.15">
+                <label>Fade <span id="seq-distort-return-val-kick">0.40</span></label>
+                <input type="range" id="seq-distort-return-kick" min="0.02" max="1" step="0.02" value="0.4">
+            </div>
+        </div>
+
+        <div class="seq-track">
+            <div class="seq-track-row">
+                <span class="seq-track-label" style="color:#33ffff">HIHAT</span>
+                <div class="seq-steps" id="seq-steps-hihat"></div>
+            </div>
+            <div class="seq-mod-row">
+                <label>Mod</label>
+                <select id="seq-mod-target-hihat"></select>
+                <label>Amt <span id="seq-mod-amount-val-hihat">0.50</span></label>
+                <input type="range" id="seq-mod-amount-hihat" min="-2" max="2" step="0.05" value="0.5">
+                <label>Return <span id="seq-mod-recovery-val-hihat">0.70</span></label>
+                <input type="range" id="seq-mod-recovery-hihat" min="0.05" max="1" step="0.05" value="0.7">
+                <span class="seq-mod-sep"></span>
+                <label>Color</label>
+                <button id="seq-color-toggle-hihat" class="seq-color-toggle">Off</button>
+                <input type="color" id="seq-color-picker-hihat" value="#00ccff" class="seq-color-picker">
+                <label>Fade <span id="seq-color-return-val-hihat">0.30</span></label>
+                <input type="range" id="seq-color-return-hihat" min="0.02" max="1" step="0.02" value="0.3">
+                <span class="seq-mod-sep"></span>
+                <label>Solid</label>
+                <button id="seq-solid-toggle-hihat" class="seq-color-toggle">Off</button>
+                <label>Fade <span id="seq-solid-return-val-hihat">0.30</span></label>
+                <input type="range" id="seq-solid-return-hihat" min="0.02" max="1" step="0.02" value="0.3">
+                <span class="seq-mod-sep"></span>
+                <label>Distort</label>
+                <button id="seq-distort-toggle-hihat" class="seq-color-toggle">Off</button>
+                <label>Amt <span id="seq-distort-amount-val-hihat">0.15</span></label>
+                <input type="range" id="seq-distort-amount-hihat" min="0.02" max="0.5" step="0.01" value="0.15">
+                <label>Fade <span id="seq-distort-return-val-hihat">0.40</span></label>
+                <input type="range" id="seq-distort-return-hihat" min="0.02" max="1" step="0.02" value="0.4">
+            </div>
+        </div>
+
+        <div class="seq-track">
+            <div class="seq-track-row">
+                <span class="seq-track-label" style="color:#ffff33">SNARE</span>
+                <div class="seq-steps" id="seq-steps-snare"></div>
+            </div>
+            <div class="seq-mod-row">
+                <label>Mod</label>
+                <select id="seq-mod-target-snare"></select>
+                <label>Amt <span id="seq-mod-amount-val-snare">0.50</span></label>
+                <input type="range" id="seq-mod-amount-snare" min="-2" max="2" step="0.05" value="0.5">
+                <label>Return <span id="seq-mod-recovery-val-snare">0.50</span></label>
+                <input type="range" id="seq-mod-recovery-snare" min="0.05" max="1" step="0.05" value="0.5">
+                <span class="seq-mod-sep"></span>
+                <label>Color</label>
+                <button id="seq-color-toggle-snare" class="seq-color-toggle">Off</button>
+                <input type="color" id="seq-color-picker-snare" value="#0044ff" class="seq-color-picker">
+                <label>Fade <span id="seq-color-return-val-snare">0.30</span></label>
+                <input type="range" id="seq-color-return-snare" min="0.02" max="1" step="0.02" value="0.3">
+                <span class="seq-mod-sep"></span>
+                <label>Solid</label>
+                <button id="seq-solid-toggle-snare" class="seq-color-toggle">Off</button>
+                <label>Fade <span id="seq-solid-return-val-snare">0.30</span></label>
+                <input type="range" id="seq-solid-return-snare" min="0.02" max="1" step="0.02" value="0.3">
+                <span class="seq-mod-sep"></span>
+                <label>Distort</label>
+                <button id="seq-distort-toggle-snare" class="seq-color-toggle">Off</button>
+                <label>Amt <span id="seq-distort-amount-val-snare">0.15</span></label>
+                <input type="range" id="seq-distort-amount-snare" min="0.02" max="0.5" step="0.01" value="0.15">
+                <label>Fade <span id="seq-distort-return-val-snare">0.40</span></label>
+                <input type="range" id="seq-distort-return-snare" min="0.02" max="1" step="0.02" value="0.4">
+            </div>
+        </div>
+    </div>
+
     <!-- Model Editor Modal -->
     <div id="modelEditorModal" class="modal">
         <div class="modal-content">
@@ -255,6 +400,7 @@
 
     <script src="presets.js"></script>
     <script src="usb-stream.js"></script>
+    <script src="sequencer.js"></script>
     <script src="index.js"></script>
 </body>
 

@@ -1,4 +1,4 @@
-let BACKGROUND = "#030317"
+let BACKGROUND = "#000000"
 const FOREGROUND = "#50FF50"
 
 console.log(game)
@@ -12,12 +12,12 @@ const modelPresets = MODEL_PRESETS;
 
 // Current model being rendered (starts with penguin)
 let currentModel = {
-    vs: [...modelPresets.penguin.vs],
-    fs: modelPresets.penguin.fs.map(f => [...f])
+    vs: [...modelPresets.cube.vs],
+    fs: modelPresets.cube.fs.map(f => [...f])
 };
 
 // Current selected preset name
-let currentPresetName = 'penguin';
+let currentPresetName = 'cube';
 
 // Function to switch model
 function loadModel(presetName) {
@@ -230,12 +230,12 @@ let config = {
     autoRotationX: 0,
     autoRotationY: 0,
     autoRotationZ: 0,
-    solidMode: true,
-    wireframeThickness: 1.0,
-    wireframeColor: '#FF0F77',
-    strokeColor: '#0a0a0a',
+    solidMode: false,
+    wireframeThickness: 10.0,
+    wireframeColor: '#ff0000',
+    strokeColor: '#000000',
     contrast: 70,
-    starsEnabled: true,
+    starsEnabled: false,
     starSpeed: 0.3,
     zoomAutoEnabled: false,
     zoomMin: 0.8,
@@ -491,7 +491,8 @@ modelPresetSelect.addEventListener('change', (e) => {
 });
 
 // Initialize with default model
-loadModel('penguin');
+loadModel('cube');
+modelPresetSelect.value = 'cube';
 
 // Initialize UI to match config defaults
 speedXValue.textContent = config.speedX.toFixed(2) + 'x';
@@ -501,8 +502,14 @@ zoomMinInput.value = config.zoomMin.toFixed(2);
 zoomMaxInput.value = config.zoomMax.toFixed(2);
 zoomSpeedValue.textContent = config.zoomSpeed.toFixed(1) + 'x';
 thicknessValue.textContent = config.wireframeThickness.toFixed(1) + 'px';
+thicknessSlider.value = config.wireframeThickness;
 contrastValue.textContent = config.contrast.toFixed(0) + '%';
 starSpeedValue.textContent = config.starSpeed.toFixed(1) + 'x';
+colorPicker.value = config.wireframeColor;
+strokeColorPicker.value = config.strokeColor;
+backgroundPicker.value = BACKGROUND;
+solidToggle.textContent = 'Wireframe';
+starsToggle.textContent = 'Off';
 
 // Mouse wheel zoom on canvas
 game.addEventListener('wheel', (e) => {
@@ -691,12 +698,12 @@ resetBtn.addEventListener('click', () => {
     config.autoRotationX = 0;
     config.autoRotationY = 0;
     config.autoRotationZ = 0;
-    config.solidMode = true;
-    config.wireframeThickness = 1.0;
-    config.wireframeColor = '#FF0F77';
-    config.strokeColor = '#0a0a0a';
+    config.solidMode = false;
+    config.wireframeThickness = 10.0;
+    config.wireframeColor = '#ff0000';
+    config.strokeColor = '#000000';
     config.contrast = 70;
-    config.starsEnabled = true;
+    config.starsEnabled = false;
     config.starSpeed = 0.3;
     config.zoomAutoEnabled = false;
     config.zoomMin = 0.8;
@@ -716,14 +723,14 @@ resetBtn.addEventListener('click', () => {
     zoomMinSlider.value = 0.8;
     zoomMaxSlider.value = 1.5;
     zoomSpeedSlider.value = 1.0;
-    thicknessSlider.value = 1.0;
-    colorPicker.value = '#FF0F77';
-    strokeColorPicker.value = '#0a0a0a';
+    thicknessSlider.value = 10.0;
+    colorPicker.value = '#ff0000';
+    strokeColorPicker.value = '#000000';
     contrastSlider.value = 70;
-    backgroundPicker.value = '#030317';
-    BACKGROUND = '#030317';
-    solidToggle.textContent = 'Solid';
-    starsToggle.textContent = 'On';
+    backgroundPicker.value = '#000000';
+    BACKGROUND = '#000000';
+    solidToggle.textContent = 'Wireframe';
+    starsToggle.textContent = 'Off';
     starSpeedSlider.value = 0.3;
 
     speedXValue.textContent = '0.10x';
@@ -736,9 +743,11 @@ resetBtn.addEventListener('click', () => {
     zoomMinInput.value = '0.80';
     zoomMaxInput.value = '1.50';
     zoomSpeedValue.textContent = '1.0x';
-    thicknessValue.textContent = '1.0px';
+    thicknessValue.textContent = '10.0px';
     contrastValue.textContent = '70%';
     starSpeedValue.textContent = '0.3x';
+    loadModel('cube');
+    modelPresetSelect.value = 'cube';
 
     dz = 1;
 });
@@ -748,36 +757,36 @@ USBStream.initControls(game, () => {
     initStars();
 });
 
+// Initialize sequencer
+Sequencer.initUI();
+
 function frame() {
     const dt = 1 / FPS;
 
-    // Update auto-rotation angles for each axis
-    config.autoRotationX += Math.PI * dt * config.speedX;
-    config.autoRotationY += Math.PI * dt * config.speedY;
-    config.autoRotationZ += Math.PI * dt * config.speedZ;
+    // Update sequencer modulations
+    Sequencer.updateModulations(dt);
 
-    // Combine base angles from sliders with auto-rotation
-    const currentAngleX = config.angleX + config.autoRotationX;
-    const currentAngleY = config.angleY + config.autoRotationY;
-    const currentAngleZ = config.angleZ + config.autoRotationZ;
+    // Update auto-rotation angles for each axis (with sequencer modulation)
+    config.autoRotationX += Math.PI * dt * (config.speedX + Sequencer.getModOffset('speedX'));
+    config.autoRotationY += Math.PI * dt * (config.speedY + Sequencer.getModOffset('speedY'));
+    config.autoRotationZ += Math.PI * dt * (config.speedZ + Sequencer.getModOffset('speedZ'));
+
+    // Combine base angles from sliders with auto-rotation and angle modulation
+    const currentAngleX = config.angleX + config.autoRotationX + Sequencer.getModOffset('angleX');
+    const currentAngleY = config.angleY + config.autoRotationY + Sequencer.getModOffset('angleY');
+    const currentAngleZ = config.angleZ + config.autoRotationZ + Sequencer.getModOffset('angleZ');
 
     // Update zoom automation
     if (config.zoomAutoEnabled) {
-        // Increment time based on speed
         config.zoomAutoTime += dt * config.zoomSpeed;
-
-        // Use sine wave for smooth oscillation
-        // Map sine (-1 to 1) to zoom range (min to max)
         const sineValue = Math.sin(config.zoomAutoTime * Math.PI);
         config.zoom = config.zoomMin + (config.zoomMax - config.zoomMin) * (sineValue + 1) / 2;
-
-        // Update UI
         zoomSlider.value = config.zoom;
         zoomValue.textContent = config.zoom.toFixed(2);
     }
 
-    // Update zoom
-    dz = config.zoom;
+    // Update zoom with sequencer modulation (clamp to prevent camera clipping)
+    dz = Math.max(0.05, config.zoom + Sequencer.getModOffset('zoom'));
 
     // Update star positions
     updateStars(dt);
@@ -787,20 +796,33 @@ function frame() {
     // Draw stars behind 3D object
     drawStars();
 
-    if (config.solidMode) {
-        // Solid rendering with lighting and depth sorting
+    const effectiveColor = Sequencer.getColorBlend(config.wireframeColor);
+    const solidAmount = config.solidMode ? 1 : Sequencer.getSolidAmount();
+    const distortAmt = Sequencer.getDistortAmount();
+    const dNoise = Sequencer.distortNoise;
+
+    function getVertex(vi) {
+        const v = currentModel.vs[vi];
+        if (distortAmt <= 0) return v;
+        const n = dNoise[vi % dNoise.length];
+        return {
+            x: v.x + n.x * distortAmt,
+            y: v.y + n.y * distortAmt,
+            z: v.z + n.z * distortAmt,
+        };
+    }
+
+    if (solidAmount > 0) {
         const facesWithDepth = [];
 
         for (const f of currentModel.fs) {
-            // Skip edges (faces with only 2 vertices)
             if (f.length < 3) continue;
 
-            // Transform all vertices of this face
             const transformedVertices = [];
             let allValid = true;
 
             for (let i = 0; i < f.length; i++) {
-                const v = currentModel.vs[f[i]];
+                const v = getVertex(f[i]);
                 const rotated = rotate_xyz(v, currentAngleX, currentAngleY, currentAngleZ);
                 const translated = translate_z(rotated, dz);
 
@@ -811,56 +833,45 @@ function frame() {
                 transformedVertices.push(translated);
             }
 
-            // Skip faces that are behind or too close to camera
             if (!allValid) continue;
 
-            // Calculate face center for depth sorting
             const center = calculateCenter(transformedVertices);
-
-            // Calculate face normal (use first 3 vertices)
             const normal = calculateNormal(
                 transformedVertices[0],
                 transformedVertices[1],
                 transformedVertices[2]
             );
 
-            // Calculate lighting intensity based on how face is oriented to camera
-            // normal.z tells us if face is pointing towards (+) or away (-) from camera
             const lightIntensity = Math.abs(normal.z);
-
-            // Calculate depth-based brightness (closer = brighter)
             const depthBrightness = Math.max(0.3, Math.min(1.0, 2.0 / center.z));
-
-            // Ambient light decreases with contrast for more dramatic lighting
             const contrastFactor = config.contrast / 100;
-            const baseBrightness = 0.4 - (contrastFactor * 0.35); // 0.4 down to 0.05
-            const directionalLight = 0.6 + (contrastFactor * 0.4); // 0.6 up to 1.0
-
-            // Combine lighting and depth
+            const baseBrightness = 0.4 - (contrastFactor * 0.35);
+            const directionalLight = 0.6 + (contrastFactor * 0.4);
             const brightness = baseBrightness + (lightIntensity * directionalLight * depthBrightness);
 
             facesWithDepth.push({
                 vertices: transformedVertices,
                 depth: center.z,
-                color: brightnessToColor(brightness, config.wireframeColor, config.contrast),
+                color: brightnessToColor(brightness, effectiveColor, config.contrast),
                 normal: normal
             });
         }
 
-        // Sort faces by depth (back to front for painter's algorithm)
         facesWithDepth.sort((a, b) => b.depth - a.depth);
 
-        // Draw sorted faces
         for (const face of facesWithDepth) {
             const screenPoints = face.vertices.map(v => screen(project(v)));
-            polygon(screenPoints, face.color, config.strokeColor, config.wireframeThickness, true, true);
+            ctx.globalAlpha = solidAmount;
+            polygon(screenPoints, face.color, config.strokeColor, config.wireframeThickness, true, solidAmount >= 1);
+            ctx.globalAlpha = 1;
         }
-    } else {
-        // Wireframe rendering
+    }
+
+    if (solidAmount < 1) {
         for (const f of currentModel.fs) {
             for (let i = 0; i < f.length; ++i) {
-                const a = currentModel.vs[f[i]];
-                const b = currentModel.vs[f[(i + 1) % f.length]];
+                const a = getVertex(f[i]);
+                const b = getVertex(f[(i + 1) % f.length]);
 
                 const rotatedA = rotate_xyz(a, currentAngleX, currentAngleY, currentAngleZ);
                 const rotatedB = rotate_xyz(b, currentAngleX, currentAngleY, currentAngleZ);
@@ -873,7 +884,7 @@ function frame() {
                 line(screen(project(tA)),
                     screen(project(tB)),
                     config.wireframeThickness,
-                    config.wireframeColor)
+                    effectiveColor)
             }
         }
     }
