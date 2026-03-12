@@ -2,8 +2,8 @@ let BACKGROUND = "#030317"
 const FOREGROUND = "#50FF50"
 
 console.log(game)
-game.width = 800
-game.height = 800
+game.width = USBStream.panelWidth * USBStream.renderScale;
+game.height = USBStream.panelHeight * USBStream.renderScale;
 const ctx = game.getContext("2d")
 console.log(ctx)
 
@@ -154,10 +154,12 @@ function brightnessToColor(brightness, baseColor, contrast) {
 }
 
 function screen(p) {
-    // -1..1 => 0..2 => 0..1 => 0..w
+    const size = Math.min(game.width, game.height);
+    const offsetX = (game.width - size) / 2;
+    const offsetY = (game.height - size) / 2;
     return {
-        x: (p.x + 1) / 2 * game.width,
-        y: (1 - (p.y + 1) / 2) * game.height,
+        x: (p.x + 1) / 2 * size + offsetX,
+        y: (1 - (p.y + 1) / 2) * size + offsetY,
     }
 }
 
@@ -338,8 +340,8 @@ const angleXValue = document.getElementById('angleXValue');
 const angleYValue = document.getElementById('angleYValue');
 const angleZValue = document.getElementById('angleZValue');
 const zoomValue = document.getElementById('zoomValue');
-const zoomMinValue = document.getElementById('zoomMinValue');
-const zoomMaxValue = document.getElementById('zoomMaxValue');
+const zoomMinInput = document.getElementById('zoomMinInput');
+const zoomMaxInput = document.getElementById('zoomMaxInput');
 const zoomSpeedValue = document.getElementById('zoomSpeedValue');
 const thicknessValue = document.getElementById('thicknessValue');
 const contrastValue = document.getElementById('contrastValue');
@@ -405,27 +407,31 @@ zoomAutoToggle.addEventListener('click', () => {
     }
 });
 
-// Zoom min control
-zoomMinSlider.addEventListener('input', (e) => {
-    config.zoomMin = parseFloat(e.target.value);
-    // Ensure min doesn't exceed max
+// Zoom min control (slider + input synced)
+function updateZoomMin(val) {
+    config.zoomMin = val;
     if (config.zoomMin > config.zoomMax) {
         config.zoomMin = config.zoomMax;
-        zoomMinSlider.value = config.zoomMin;
     }
-    zoomMinValue.textContent = config.zoomMin.toFixed(2);
-});
+    zoomMinSlider.value = config.zoomMin;
+    zoomMinInput.value = config.zoomMin.toFixed(2);
+}
 
-// Zoom max control
-zoomMaxSlider.addEventListener('input', (e) => {
-    config.zoomMax = parseFloat(e.target.value);
-    // Ensure max doesn't go below min
+zoomMinSlider.addEventListener('input', (e) => updateZoomMin(parseFloat(e.target.value)));
+zoomMinInput.addEventListener('input', (e) => updateZoomMin(parseFloat(e.target.value) || 0.1));
+
+// Zoom max control (slider + input synced)
+function updateZoomMax(val) {
+    config.zoomMax = val;
     if (config.zoomMax < config.zoomMin) {
         config.zoomMax = config.zoomMin;
-        zoomMaxSlider.value = config.zoomMax;
     }
-    zoomMaxValue.textContent = config.zoomMax.toFixed(2);
-});
+    zoomMaxSlider.value = config.zoomMax;
+    zoomMaxInput.value = config.zoomMax.toFixed(2);
+}
+
+zoomMaxSlider.addEventListener('input', (e) => updateZoomMax(parseFloat(e.target.value)));
+zoomMaxInput.addEventListener('input', (e) => updateZoomMax(parseFloat(e.target.value) || 0.1));
 
 // Zoom speed control
 zoomSpeedSlider.addEventListener('input', (e) => {
@@ -491,8 +497,8 @@ loadModel('penguin');
 speedXValue.textContent = config.speedX.toFixed(2) + 'x';
 speedYValue.textContent = config.speedY.toFixed(2) + 'x';
 speedZValue.textContent = config.speedZ.toFixed(2) + 'x';
-zoomMinValue.textContent = config.zoomMin.toFixed(2);
-zoomMaxValue.textContent = config.zoomMax.toFixed(2);
+zoomMinInput.value = config.zoomMin.toFixed(2);
+zoomMaxInput.value = config.zoomMax.toFixed(2);
 zoomSpeedValue.textContent = config.zoomSpeed.toFixed(1) + 'x';
 thicknessValue.textContent = config.wireframeThickness.toFixed(1) + 'px';
 contrastValue.textContent = config.contrast.toFixed(0) + '%';
@@ -518,7 +524,7 @@ game.addEventListener('wheel', (e) => {
     config.zoom += direction * zoomStep;
 
     // Clamp to valid range (0.5 to 5)
-    config.zoom = Math.max(0.5, Math.min(5.0, config.zoom));
+    config.zoom = Math.max(0.1, Math.min(5.0, config.zoom));
 
     // Update UI
     zoomSlider.value = config.zoom;
@@ -727,14 +733,19 @@ resetBtn.addEventListener('click', () => {
     angleYValue.textContent = '0°';
     angleZValue.textContent = '0°';
     zoomValue.textContent = '1.00';
-    zoomMinValue.textContent = '0.80';
-    zoomMaxValue.textContent = '1.50';
+    zoomMinInput.value = '0.80';
+    zoomMaxInput.value = '1.50';
     zoomSpeedValue.textContent = '1.0x';
     thicknessValue.textContent = '1.0px';
     contrastValue.textContent = '70%';
     starSpeedValue.textContent = '0.3x';
 
     dz = 1;
+});
+
+// Initialize USB LED streaming
+USBStream.initControls(game, () => {
+    initStars();
 });
 
 function frame() {
@@ -793,8 +804,7 @@ function frame() {
                 const rotated = rotate_xyz(v, currentAngleX, currentAngleY, currentAngleZ);
                 const translated = translate_z(rotated, dz);
 
-                // Check if vertex is in front of camera (positive z)
-                if (translated.z <= 0.1) {
+                if (translated.z <= 0.01) {
                     allValid = false;
                     break;
                 }
@@ -855,8 +865,13 @@ function frame() {
                 const rotatedA = rotate_xyz(a, currentAngleX, currentAngleY, currentAngleZ);
                 const rotatedB = rotate_xyz(b, currentAngleX, currentAngleY, currentAngleZ);
 
-                line(screen(project(translate_z(rotatedA, dz))),
-                    screen(project(translate_z(rotatedB, dz))),
+                const tA = translate_z(rotatedA, dz);
+                const tB = translate_z(rotatedB, dz);
+
+                if (tA.z <= 0.01 || tB.z <= 0.01) continue;
+
+                line(screen(project(tA)),
+                    screen(project(tB)),
                     config.wireframeThickness,
                     config.wireframeColor)
             }

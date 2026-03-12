@@ -36,14 +36,16 @@ body {
     font-family: var(--font-mono);
     display: grid;
     grid-template-columns: auto var(--panel-width) var(--panel-width);
-    grid-template-rows: auto auto;
+    grid-template-rows: auto auto auto;
     gap: var(--spacing-lg);
 }
 
 #game {
     border: var(--border-width) solid var(--color-primary);
-    grid-row: 1 / 3;
+    grid-row: 1 / 4;
     grid-column: 1;
+    max-height: 90vh;
+    width: auto;
 }
 
 .controls {
@@ -53,7 +55,7 @@ body {
     border-radius: var(--border-radius-lg);
     height: fit-content;
     grid-column: 2;
-    grid-row: 1 / 3;
+    grid-row: 1 / 4;
 }
 
 .model-controls {
@@ -119,6 +121,19 @@ body {
     margin-left: var(--spacing-md);
     font-size: var(--font-size-sm);
     color: var(--color-primary);
+}
+
+.inline-input {
+    width: 60px;
+    padding: 2px 4px;
+    background: var(--color-bg-input);
+    color: var(--color-primary);
+    border: 1px solid var(--color-primary);
+    border-radius: var(--border-radius-sm);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+    text-align: right;
+    float: right;
 }
 
 .control-group select {
@@ -212,4 +227,105 @@ textarea {
     color: var(--color-primary);
     margin-top: var(--spacing-md);
     display: none;
+}
+
+/* USB LED Stream Panel */
+.usb-controls {
+    background: var(--color-bg-panel);
+    padding: var(--spacing-lg);
+    border: var(--border-width) solid var(--color-primary);
+    border-radius: var(--border-radius-lg);
+    height: fit-content;
+    grid-column: 3;
+    grid-row: 3;
+}
+
+.usb-controls input[type="number"] {
+    width: 100%;
+    padding: var(--spacing-sm);
+    background: var(--color-bg-input);
+    color: var(--color-primary);
+    border: 1px solid var(--color-primary);
+    border-radius: var(--border-radius-md);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-md);
+    box-sizing: border-box;
+}
+
+.usb-controls select {
+    width: 100%;
+    padding: var(--spacing-sm);
+    background: var(--color-bg-input);
+    color: var(--color-primary);
+    border: 1px solid var(--color-primary);
+    border-radius: var(--border-radius-md);
+    font-family: var(--font-mono);
+}
+
+.usb-controls button.connected {
+    background: var(--color-primary);
+    color: var(--color-text-dark);
+}
+
+.usb-controls button.streaming {
+    background: #ff4444;
+    border-color: #ff4444;
+    color: #fff;
+}
+
+.usb-panels-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: var(--spacing-md);
+}
+
+.usb-panel-slot {
+    background: var(--color-bg-input);
+    border: 1px solid #444;
+    border-radius: var(--border-radius-md);
+    padding: 8px;
+    text-align: center;
+    transition: border-color 0.2s;
+}
+
+.usb-panel-slot.connected {
+    border-color: var(--color-primary);
+}
+
+.usb-panel-slot label {
+    display: block;
+    font-size: 11px;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.usb-panel-status {
+    display: block;
+    font-size: 10px;
+    margin-bottom: 6px;
+    min-height: 14px;
+}
+
+.usb-panel-slot button {
+    width: 100%;
+    padding: 4px 6px;
+    font-size: 11px;
+    margin-top: 0;
+}
+
+.usb-status-info {
+    color: #666;
+}
+
+.usb-status-connected {
+    color: var(--color-primary);
+}
+
+.usb-status-streaming {
+    color: #ff4444;
+}
+
+.usb-status-error {
+    color: #ff4444;
 }
