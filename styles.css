@@ -273,26 +273,49 @@ textarea {
     color: #fff;
 }
 
-.usb-preview-container {
-    margin-top: var(--spacing-lg);
+.usb-panels-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: var(--spacing-md);
+}
+
+.usb-panel-slot {
+    background: var(--color-bg-input);
+    border: 1px solid #444;
+    border-radius: var(--border-radius-md);
+    padding: 8px;
     text-align: center;
+    transition: border-color 0.2s;
 }
 
-.usb-preview-container label {
+.usb-panel-slot.connected {
+    border-color: var(--color-primary);
+}
+
+.usb-panel-slot label {
     display: block;
-    margin-bottom: var(--spacing-sm);
+    font-size: 11px;
     font-weight: bold;
-    font-size: var(--font-size-md);
+    margin-bottom: 4px;
 }
 
-#usbPreviewCanvas {
-    border: 1px solid var(--color-primary);
-    image-rendering: pixelated;
-    background: #000;
+.usb-panel-status {
+    display: block;
+    font-size: 10px;
+    margin-bottom: 6px;
+    min-height: 14px;
+}
+
+.usb-panel-slot button {
+    width: 100%;
+    padding: 4px 6px;
+    font-size: 11px;
+    margin-top: 0;
 }
 
 .usb-status-info {
-    color: #999;
+    color: #666;
 }
 
 .usb-status-connected {

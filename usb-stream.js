@@ -1,11 +1,14 @@
 const USBStream = (() => {
     const CHUNK_SIZE = 1024;
     const RENDER_SCALE = 10;
+    const PANEL_IDS = ['left', 'center', 'right'];
+
+    const panels = {};
+    PANEL_IDS.forEach(id => {
+        panels[id] = { port: null, writer: null, isConnected: false };
+    });
 
     const state = {
-        port: null,
-        writer: null,
-        isConnected: false,
         isStreaming: false,
         panelWidth: 40,
         panelHeight: 96,
@@ -24,25 +27,9 @@ const USBStream = (() => {
         alpha: false,
     });
 
-    const previewCanvas = document.getElementById('usbPreviewCanvas');
-    const previewCtx = previewCanvas
-        ? previewCanvas.getContext('2d', { alpha: false })
-        : null;
-
     function applyDimensions() {
         captureCanvas.width = state.panelWidth;
         captureCanvas.height = state.panelHeight;
-
-        if (previewCanvas) {
-            previewCanvas.width = state.panelWidth;
-            previewCanvas.height = state.panelHeight;
-
-            // Scale preview CSS to a visible size while preserving aspect ratio
-            const maxPreviewHeight = 240;
-            const scale = maxPreviewHeight / state.panelHeight;
-            previewCanvas.style.width = Math.round(state.panelWidth * scale) + 'px';
-            previewCanvas.style.height = Math.round(state.panelHeight * scale) + 'px';
-        }
 
         if (state.sourceCanvas) {
             state.sourceCanvas.width = state.panelWidth * RENDER_SCALE;
@@ -63,11 +50,21 @@ const USBStream = (() => {
         applyDimensions();
     }
 
-    function setStatus(text, type) {
-        const el = document.getElementById('usbStatus');
+    function connectedCount() {
+        return PANEL_IDS.filter(id => panels[id].isConnected).length;
+    }
+
+    function updateStreamButton() {
+        const btn = document.getElementById('usbStreamBtn');
+        if (btn) btn.disabled = connectedCount() === 0;
+    }
+
+    function setPanelStatus(panelId, text, type) {
+        const capId = panelId.charAt(0).toUpperCase() + panelId.slice(1);
+        const el = document.getElementById('status' + capId);
         if (el) {
             el.textContent = text;
-            el.className = 'value-display usb-status-' + (type || 'info');
+            el.className = 'usb-panel-status usb-status-' + (type || 'info');
         }
     }
 
@@ -76,51 +73,69 @@ const USBStream = (() => {
         if (el) el.textContent = fps;
     }
 
-    async function connect() {
-        if (state.isConnected) return disconnect();
+    async function connectPanel(panelId) {
+        const panel = panels[panelId];
+
+        if (panel.isConnected) {
+            return disconnectPanel(panelId);
+        }
 
         try {
-            state.port = await navigator.serial.requestPort();
-            await state.port.open({ baudRate: state.baudRate });
-            state.isConnected = true;
-            setStatus('Connected', 'connected');
+            panel.port = await navigator.serial.requestPort();
+            await panel.port.open({ baudRate: state.baudRate });
+            panel.isConnected = true;
+            setPanelStatus(panelId, 'Connected', 'connected');
 
-            const btn = document.getElementById('usbConnectBtn');
+            const capId = panelId.charAt(0).toUpperCase() + panelId.slice(1);
+            const btn = document.getElementById('connect' + capId);
             if (btn) {
                 btn.textContent = 'Disconnect';
                 btn.classList.add('connected');
             }
 
-            const streamBtn = document.getElementById('usbStreamBtn');
-            if (streamBtn) streamBtn.disabled = false;
+            const slot = document.getElementById('panelSlot' + capId);
+            if (slot) slot.classList.add('connected');
+
+            updateStreamButton();
         } catch (err) {
-            setStatus('Failed: ' + err.message, 'error');
+            setPanelStatus(panelId, 'Failed', 'error');
         }
     }
 
-    async function disconnect() {
-        if (state.isStreaming) stopStreaming();
+    async function disconnectPanel(panelId) {
+        const panel = panels[panelId];
 
-        try {
-            if (state.port) {
-                await state.port.close();
-                state.port = null;
-            }
-        } catch (err) {
-            console.warn('Disconnect error:', err);
+        if (panel.writer) {
+            try { panel.writer.releaseLock(); } catch (_) {}
+            panel.writer = null;
         }
 
-        state.isConnected = false;
-        setStatus('Disconnected', 'info');
+        try {
+            if (panel.port) {
+                await panel.port.close();
+                panel.port = null;
+            }
+        } catch (err) {
+            console.warn(`Disconnect ${panelId} error:`, err);
+        }
 
-        const btn = document.getElementById('usbConnectBtn');
+        panel.isConnected = false;
+        setPanelStatus(panelId, '--', 'info');
+
+        const capId = panelId.charAt(0).toUpperCase() + panelId.slice(1);
+        const btn = document.getElementById('connect' + capId);
         if (btn) {
             btn.textContent = 'Connect';
             btn.classList.remove('connected');
         }
 
-        const streamBtn = document.getElementById('usbStreamBtn');
-        if (streamBtn) streamBtn.disabled = true;
+        const slot = document.getElementById('panelSlot' + capId);
+        if (slot) slot.classList.remove('connected');
+
+        if (connectedCount() === 0 && state.isStreaming) {
+            stopStreaming();
+        }
+        updateStreamButton();
     }
 
     function captureFrame(sourceCanvas) {
@@ -129,10 +144,6 @@ const USBStream = (() => {
             0, 0, sourceCanvas.width, sourceCanvas.height,
             0, 0, state.panelWidth, state.panelHeight
         );
-
-        if (previewCtx) {
-            previewCtx.drawImage(captureCanvas, 0, 0);
-        }
 
         const imageData = captureCtx.getImageData(
             0, 0, state.panelWidth, state.panelHeight
@@ -151,27 +162,39 @@ const USBStream = (() => {
         return rgbData;
     }
 
-    async function sendFrame(rgbData) {
-        if (!state.writer) return;
+    async function sendToPanel(panel, rgbData) {
+        if (!panel.writer) return;
 
         for (let i = 0; i < rgbData.length; i += CHUNK_SIZE) {
             const chunk = rgbData.subarray(i, Math.min(i + CHUNK_SIZE, rgbData.length));
-            await state.writer.write(chunk);
+            await panel.writer.write(chunk);
         }
     }
 
+    async function sendToAllPanels(rgbData) {
+        const promises = PANEL_IDS
+            .filter(id => panels[id].isConnected && panels[id].writer)
+            .map(id => sendToPanel(panels[id], rgbData));
+        await Promise.all(promises);
+    }
+
     function startStreaming(sourceCanvas) {
-        if (!state.isConnected || !state.port) return;
+        if (connectedCount() === 0) return;
 
         state.isStreaming = true;
-        state.writer = state.port.writable.getWriter();
         state.frameCount = 0;
         state.lastFpsTime = performance.now();
 
+        PANEL_IDS.forEach(id => {
+            const panel = panels[id];
+            if (panel.isConnected && panel.port) {
+                panel.writer = panel.port.writable.getWriter();
+                setPanelStatus(id, 'Streaming', 'streaming');
+            }
+        });
+
         const frameTime = 1000 / state.targetFps;
         let lastFrameTime = performance.now();
-
-        setStatus('Streaming', 'streaming');
 
         const streamBtn = document.getElementById('usbStreamBtn');
         if (streamBtn) {
@@ -187,7 +210,7 @@ const USBStream = (() => {
             if (now - lastFrameTime >= frameTime) {
                 try {
                     const rgbData = captureFrame(sourceCanvas);
-                    await sendFrame(rgbData);
+                    await sendToAllPanels(rgbData);
 
                     state.frameCount++;
                     if (now - state.lastFpsTime >= 1000) {
@@ -199,7 +222,6 @@ const USBStream = (() => {
                     lastFrameTime = now;
                 } catch (err) {
                     console.error('Stream error:', err);
-                    setStatus('Error: ' + err.message, 'error');
                     stopStreaming();
                     return;
                 }
@@ -219,13 +241,17 @@ const USBStream = (() => {
             state.streamAnimationId = null;
         }
 
-        if (state.writer) {
-            state.writer.releaseLock();
-            state.writer = null;
-        }
+        PANEL_IDS.forEach(id => {
+            const panel = panels[id];
+            if (panel.writer) {
+                try { panel.writer.releaseLock(); } catch (_) {}
+                panel.writer = null;
+            }
+            if (panel.isConnected) {
+                setPanelStatus(id, 'Connected', 'connected');
+            }
+        });
 
-        setStatus(state.isConnected ? 'Connected' : 'Disconnected',
-            state.isConnected ? 'connected' : 'info');
         updateFpsDisplay(0);
 
         const streamBtn = document.getElementById('usbStreamBtn');
@@ -247,18 +273,23 @@ const USBStream = (() => {
         state.sourceCanvas = sourceCanvas;
         state.onResizeCallback = onResize || null;
 
-        // Set canvas to panel aspect ratio on init
         applyDimensions();
 
         if (!navigator.serial) {
-            setStatus('WebSerial not supported', 'error');
-            const connectBtn = document.getElementById('usbConnectBtn');
-            if (connectBtn) connectBtn.disabled = true;
+            PANEL_IDS.forEach(id => {
+                setPanelStatus(id, 'No WebSerial', 'error');
+                const capId = id.charAt(0).toUpperCase() + id.slice(1);
+                const btn = document.getElementById('connect' + capId);
+                if (btn) btn.disabled = true;
+            });
             return;
         }
 
-        document.getElementById('usbConnectBtn')
-            ?.addEventListener('click', connect);
+        PANEL_IDS.forEach(id => {
+            const capId = id.charAt(0).toUpperCase() + id.slice(1);
+            document.getElementById('connect' + capId)
+                ?.addEventListener('click', () => connectPanel(id));
+        });
 
         document.getElementById('usbStreamBtn')
             ?.addEventListener('click', () => toggleStreaming(sourceCanvas));
@@ -296,7 +327,6 @@ const USBStream = (() => {
 
     return {
         get isStreaming() { return state.isStreaming; },
-        get isConnected() { return state.isConnected; },
         get panelWidth() { return state.panelWidth; },
         get panelHeight() { return state.panelHeight; },
         get renderScale() { return RENDER_SCALE; },
