@@ -100,6 +100,51 @@
         </div>
 
         <div class="control-group">
+            <label>
+                FOV
+                <span class="value-display" id="fovValue">60°</span>
+            </label>
+            <input type="range" id="fovSlider" min="20" max="120" step="1" value="60">
+        </div>
+
+        <div class="control-group">
+            <label>
+                Y Position
+                <span class="value-display" id="offsetYValue">0.00</span>
+            </label>
+            <input type="range" id="offsetYSlider" min="-2" max="2" step="0.05" value="0">
+        </div>
+
+        <div class="control-group">
+            <label>Y Position Automation</label>
+            <button id="offsetYAutoToggle" style="margin-top: 0;">Off</button>
+        </div>
+
+        <div class="control-group">
+            <label>
+                Min Y
+                <input type="number" class="inline-input" id="offsetYMinInput" min="-2" max="2" step="0.05" value="-0.5">
+            </label>
+            <input type="range" id="offsetYMinSlider" min="-2" max="2" step="0.05" value="-0.5">
+        </div>
+
+        <div class="control-group">
+            <label>
+                Max Y
+                <input type="number" class="inline-input" id="offsetYMaxInput" min="-2" max="2" step="0.05" value="0.5">
+            </label>
+            <input type="range" id="offsetYMaxSlider" min="-2" max="2" step="0.05" value="0.5">
+        </div>
+
+        <div class="control-group">
+            <label>
+                Y Speed
+                <span class="value-display" id="offsetYSpeedValue">1.0x</span>
+            </label>
+            <input type="range" id="offsetYSpeedSlider" min="0.1" max="5" step="0.1" value="1">
+        </div>
+
+        <div class="control-group">
             <label>Render Mode</label>
             <button id="solidToggle" style="margin-top: 0;">Wireframe</button>
         </div>
@@ -116,6 +161,7 @@
                 <option value="penguin">Penguin</option>
                 <option value="cube">Cube</option>
                 <option value="pyramid">Pyramid</option>
+                <option value="octahedron">Octahedron</option>
                 <option value="custom">Custom</option>
             </select>
         </div>
@@ -139,9 +185,42 @@
         </div>
 
         <div class="control-group">
-            <label>Object Color</label>
-            <input type="color" id="colorPicker" value="#ff0000"
+            <label>Color Count</label>
+            <div class="color-count-btns">
+                <button class="color-count-btn active" data-count="1">1</button>
+                <button class="color-count-btn" data-count="2">2</button>
+                <button class="color-count-btn" data-count="3">3</button>
+                <button class="color-count-btn" data-count="4">4</button>
+            </div>
+        </div>
+
+        <div class="control-group" id="color1Group">
+            <label>Color 1</label>
+            <input type="color" id="colorPicker1" value="#ff0000"
                 style="width: 100%; height: 40px; cursor: pointer; background: #2a2a2a; border: 2px solid #0fff83; border-radius: 4px;">
+        </div>
+
+        <div class="control-group" id="color2Group" style="display:none">
+            <label>Color 2</label>
+            <input type="color" id="colorPicker2" value="#00ff00"
+                style="width: 100%; height: 40px; cursor: pointer; background: #2a2a2a; border: 2px solid #0fff83; border-radius: 4px;">
+        </div>
+
+        <div class="control-group" id="color3Group" style="display:none">
+            <label>Color 3</label>
+            <input type="color" id="colorPicker3" value="#0000ff"
+                style="width: 100%; height: 40px; cursor: pointer; background: #2a2a2a; border: 2px solid #0fff83; border-radius: 4px;">
+        </div>
+
+        <div class="control-group" id="color4Group" style="display:none">
+            <label>Color 4</label>
+            <input type="color" id="colorPicker4" value="#ffff00"
+                style="width: 100%; height: 40px; cursor: pointer; background: #2a2a2a; border: 2px solid #0fff83; border-radius: 4px;">
+        </div>
+
+        <div class="control-group">
+            <label>Color Gradient</label>
+            <button id="gradientToggle" style="margin-top: 0;">Off</button>
         </div>
 
         <div class="control-group">
@@ -383,6 +462,24 @@
         </div>
     </div>
 
+    <div class="export-controls">
+        <h2>Export to BIN</h2>
+        <div class="export-row">
+            <div class="seq-param">
+                <label>Sequences</label>
+                <input type="number" id="exportLoops" min="1" max="8" value="1" step="1">
+            </div>
+            <span id="exportInfo" class="export-info-text">--</span>
+            <button id="exportBinBtn" class="export-btn">Export BIN</button>
+        </div>
+        <div class="export-progress" id="exportProgress" style="display:none">
+            <div class="export-progress-bar">
+                <div class="export-progress-fill" id="exportProgressFill"></div>
+            </div>
+            <span class="export-progress-text" id="exportProgressText">0%</span>
+        </div>
+    </div>
+
     <!-- Model Editor Modal -->
     <div id="modelEditorModal" class="modal">
         <div class="modal-content">
@@ -402,6 +499,8 @@
     <script src="usb-stream.js"></script>
     <script src="sequencer.js"></script>
     <script src="index.js"></script>
+    <script src="export.js"></script>
+    <script>BinExport.init();</script>
 </body>
 
 </html>
