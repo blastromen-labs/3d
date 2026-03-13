@@ -293,36 +293,6 @@ const USBStream = (() => {
 
         document.getElementById('usbStreamBtn')
             ?.addEventListener('click', () => toggleStreaming(sourceCanvas));
-
-        document.getElementById('panelWidth')
-            ?.addEventListener('change', (e) => {
-                const w = Math.max(1, parseInt(e.target.value) || 40);
-                updatePanelDimensions(w, state.panelHeight);
-                const display = document.getElementById('panelWidthValue');
-                if (display) display.textContent = w;
-            });
-
-        document.getElementById('panelHeight')
-            ?.addEventListener('change', (e) => {
-                const h = Math.max(1, parseInt(e.target.value) || 96);
-                updatePanelDimensions(state.panelWidth, h);
-                const display = document.getElementById('panelHeightValue');
-                if (display) display.textContent = h;
-            });
-
-        document.getElementById('baudRate')
-            ?.addEventListener('change', (e) => {
-                state.baudRate = parseInt(e.target.value);
-            });
-
-        const fpsSlider = document.getElementById('targetFps');
-        if (fpsSlider) {
-            fpsSlider.addEventListener('input', (e) => {
-                state.targetFps = parseInt(e.target.value);
-                const display = document.getElementById('targetFpsValue');
-                if (display) display.textContent = state.targetFps;
-            });
-        }
     }
 
     return {

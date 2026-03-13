@@ -9,6 +9,44 @@
 </head>
 
 <body>
+    <nav class="usb-navbar">
+        <span class="usb-navbar-title">USB LED</span>
+        <div class="usb-navbar-panels">
+            <div class="usb-panel-slot" id="panelSlotLeft">
+                <label>Left</label>
+                <span class="usb-panel-status" id="statusLeft">--</span>
+                <button id="connectLeft">Connect</button>
+            </div>
+            <div class="usb-panel-slot" id="panelSlotCenter">
+                <label>Center</label>
+                <span class="usb-panel-status" id="statusCenter">--</span>
+                <button id="connectCenter">Connect</button>
+            </div>
+            <div class="usb-panel-slot" id="panelSlotRight">
+                <label>Right</label>
+                <span class="usb-panel-status" id="statusRight">--</span>
+                <button id="connectRight">Connect</button>
+            </div>
+        </div>
+        <div class="usb-navbar-stream">
+            <button id="usbStreamBtn" disabled>Start Streaming</button>
+            <span class="usb-fps-display">FPS <span id="usbFps">0</span></span>
+        </div>
+        <div class="navbar-sep"></div>
+        <div class="navbar-export">
+            <label>Loops</label>
+            <input type="number" id="exportLoops" min="1" max="8" value="1" step="1">
+            <span id="exportInfo" class="export-info-text">--</span>
+            <button id="exportBinBtn" class="export-btn">Export BIN</button>
+            <div class="export-progress" id="exportProgress" style="display:none">
+                <div class="export-progress-bar">
+                    <div class="export-progress-fill" id="exportProgressFill"></div>
+                </div>
+                <span class="export-progress-text" id="exportProgressText">0%</span>
+            </div>
+        </div>
+    </nav>
+
     <canvas id="game"></canvas>
 
     <div class="controls">
@@ -17,17 +55,17 @@
         <div class="control-group">
             <label>
                 X-Axis Spin Speed
-                <span class="value-display" id="speedXValue">0.10x</span>
+                <span class="value-display" id="speedXValue">0.00x</span>
             </label>
-            <input type="range" id="speedXSlider" min="-5" max="5" step="0.1" value="0.1">
+            <input type="range" id="speedXSlider" min="-5" max="5" step="0.1" value="0">
         </div>
 
         <div class="control-group">
             <label>
                 Y-Axis Spin Speed
-                <span class="value-display" id="speedYValue">0.10x</span>
+                <span class="value-display" id="speedYValue">0.00x</span>
             </label>
-            <input type="range" id="speedYSlider" min="-5" max="5" step="0.1" value="0.1">
+            <input type="range" id="speedYSlider" min="-5" max="5" step="0.1" value="0">
         </div>
 
         <div class="control-group">
@@ -65,9 +103,9 @@
         <div class="control-group">
             <label>
                 Zoom (Depth)
-                <span class="value-display" id="zoomValue">1.00</span>
+                <span class="value-display" id="zoomValue">0.50</span>
             </label>
-            <input type="range" id="zoomSlider" min="0.1" max="5" step="0.1" value="1">
+            <input type="range" id="zoomSlider" min="0.1" max="5" step="0.1" value="0.5">
         </div>
 
         <div class="control-group">
@@ -102,9 +140,9 @@
         <div class="control-group">
             <label>
                 FOV
-                <span class="value-display" id="fovValue">60°</span>
+                <span class="value-display" id="fovValue">30°</span>
             </label>
-            <input type="range" id="fovSlider" min="20" max="120" step="1" value="60">
+            <input type="range" id="fovSlider" min="20" max="120" step="1" value="30">
         </div>
 
         <div class="control-group">
@@ -312,66 +350,6 @@
         </div>
     </div>
 
-    <div class="usb-controls">
-        <h2>USB LED Stream</h2>
-
-        <div class="control-group usb-panel-config">
-            <label>Panel Width
-                <span class="value-display" id="panelWidthValue">40</span>
-            </label>
-            <input type="number" id="panelWidth" value="40" min="1" max="512" step="1">
-        </div>
-
-        <div class="control-group usb-panel-config">
-            <label>Panel Height
-                <span class="value-display" id="panelHeightValue">96</span>
-            </label>
-            <input type="number" id="panelHeight" value="96" min="1" max="512" step="1">
-        </div>
-
-        <div class="control-group">
-            <label>Baud Rate</label>
-            <select id="baudRate">
-                <option value="115200">115200</option>
-                <option value="230400">230400</option>
-                <option value="460800">460800</option>
-                <option value="921600">921600</option>
-                <option value="2000000" selected>2000000</option>
-            </select>
-        </div>
-
-        <div class="control-group">
-            <label>Target FPS
-                <span class="value-display" id="targetFpsValue">30</span>
-            </label>
-            <input type="range" id="targetFps" min="1" max="60" step="1" value="30">
-        </div>
-
-        <div class="control-group">
-            <label>FPS <span class="value-display" id="usbFps">0</span></label>
-        </div>
-
-        <div class="usb-panels-grid">
-            <div class="usb-panel-slot" id="panelSlotLeft">
-                <label>Left Panel</label>
-                <span class="usb-panel-status" id="statusLeft">--</span>
-                <button id="connectLeft">Connect</button>
-            </div>
-            <div class="usb-panel-slot" id="panelSlotCenter">
-                <label>Center Panel</label>
-                <span class="usb-panel-status" id="statusCenter">--</span>
-                <button id="connectCenter">Connect</button>
-            </div>
-            <div class="usb-panel-slot" id="panelSlotRight">
-                <label>Right Panel</label>
-                <span class="usb-panel-status" id="statusRight">--</span>
-                <button id="connectRight">Connect</button>
-            </div>
-        </div>
-
-        <button id="usbStreamBtn" disabled>Start Streaming</button>
-    </div>
-
     <div class="sequencer-controls">
         <h2>Sequencer</h2>
 
@@ -517,24 +495,6 @@
                 <label>Fade <span id="seq-distort-return-val-snare">0.40</span></label>
                 <input type="range" id="seq-distort-return-snare" min="0.02" max="1" step="0.02" value="0.4">
             </div>
-        </div>
-    </div>
-
-    <div class="export-controls">
-        <h2>Export to BIN</h2>
-        <div class="export-row">
-            <div class="seq-param">
-                <label>Sequences</label>
-                <input type="number" id="exportLoops" min="1" max="8" value="1" step="1">
-            </div>
-            <span id="exportInfo" class="export-info-text">--</span>
-            <button id="exportBinBtn" class="export-btn">Export BIN</button>
-        </div>
-        <div class="export-progress" id="exportProgress" style="display:none">
-            <div class="export-progress-bar">
-                <div class="export-progress-fill" id="exportProgressFill"></div>
-            </div>
-            <span class="export-progress-text" id="exportProgressText">0%</span>
         </div>
     </div>
 

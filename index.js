@@ -169,7 +169,7 @@ function fovToFocal(degrees) {
     return 1 / Math.tan((degrees * Math.PI / 180) / 2);
 }
 
-let focalLength = fovToFocal(60);
+let focalLength = fovToFocal(30);
 
 function project({ x, y, z }) {
     return {
@@ -228,13 +228,13 @@ function rotate_xyz(point, angleX, angleY, angleZ) {
 
 // Control state
 let config = {
-    speedX: 0.10,
-    speedY: 0.10,
+    speedX: 0,
+    speedY: 0,
     speedZ: 0,
     angleX: 0,
     angleY: 0,
     angleZ: 0,
-    zoom: 1.0,
+    zoom: 0.5,
     autoRotationX: 0,
     autoRotationY: 0,
     autoRotationZ: 0,
@@ -257,7 +257,7 @@ let config = {
     zoomSpeed: 1.0,
     zoomAutoTime: 0,
     zoomAutoDirection: 1,
-    fov: 60,
+    fov: 30,
     offsetY: 0,
     offsetYAutoEnabled: false,
     offsetYMin: -0.5,

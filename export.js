@@ -2,8 +2,7 @@ const BinExport = (() => {
     const FRAME_SIZE_MULTIPLIER = 3; // RGB bytes per pixel
 
     function getTargetFps() {
-        const el = document.getElementById('targetFps');
-        return el ? parseInt(el.value) || 30 : 30;
+        return 30;
     }
 
     function getStepDuration() {
@@ -128,15 +127,6 @@ const BinExport = (() => {
         document.querySelectorAll('.seq-steps-btn').forEach(btn => {
             btn.addEventListener('click', () => setTimeout(updateExportInfo, 50));
         });
-
-        const fpsSlider = document.getElementById('targetFps');
-        if (fpsSlider) fpsSlider.addEventListener('input', updateExportInfo);
-
-        const widthInput = document.getElementById('panelWidth');
-        if (widthInput) widthInput.addEventListener('change', updateExportInfo);
-
-        const heightInput = document.getElementById('panelHeight');
-        if (heightInput) heightInput.addEventListener('change', updateExportInfo);
 
         updateExportInfo();
     }
