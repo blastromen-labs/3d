@@ -270,6 +270,16 @@ let config = {
     starsEnabled: false,
     starSpeedX: 0.3,
     starSpeedY: 0,
+    starSpeedXAutoEnabled: false,
+    starSpeedXMin: -3,
+    starSpeedXMax: 3,
+    starSpeedXSpeed: 1.0,
+    starSpeedXAutoTime: 0,
+    starSpeedYAutoEnabled: false,
+    starSpeedYMin: -3,
+    starSpeedYMax: 3,
+    starSpeedYSpeed: 1.0,
+    starSpeedYAutoTime: 0,
     starColor: '#ffffff',
     starContrast: 100,
     starSize: 1.0,
@@ -450,6 +460,26 @@ const starsToggle = document.getElementById('starsToggle');
 const starJoystick = document.getElementById('starJoystick');
 const starJoystickDot = document.getElementById('starJoystickDot');
 const starSpeedDisplay = document.getElementById('starSpeedDisplay');
+const starSpeedXAutoToggle = document.getElementById('starSpeedXAutoToggle');
+const starSpeedXMinGroup = document.getElementById('starSpeedXMinGroup');
+const starSpeedXMinSlider = document.getElementById('starSpeedXMinSlider');
+const starSpeedXMinInput = document.getElementById('starSpeedXMinInput');
+const starSpeedXMaxGroup = document.getElementById('starSpeedXMaxGroup');
+const starSpeedXMaxSlider = document.getElementById('starSpeedXMaxSlider');
+const starSpeedXMaxInput = document.getElementById('starSpeedXMaxInput');
+const starSpeedXSpeedGroup = document.getElementById('starSpeedXSpeedGroup');
+const starSpeedXSpeedSlider = document.getElementById('starSpeedXSpeedSlider');
+const starSpeedXSpeedValue = document.getElementById('starSpeedXSpeedValue');
+const starSpeedYAutoToggle = document.getElementById('starSpeedYAutoToggle');
+const starSpeedYMinGroup = document.getElementById('starSpeedYMinGroup');
+const starSpeedYMinSlider = document.getElementById('starSpeedYMinSlider');
+const starSpeedYMinInput = document.getElementById('starSpeedYMinInput');
+const starSpeedYMaxGroup = document.getElementById('starSpeedYMaxGroup');
+const starSpeedYMaxSlider = document.getElementById('starSpeedYMaxSlider');
+const starSpeedYMaxInput = document.getElementById('starSpeedYMaxInput');
+const starSpeedYSpeedGroup = document.getElementById('starSpeedYSpeedGroup');
+const starSpeedYSpeedSlider = document.getElementById('starSpeedYSpeedSlider');
+const starSpeedYSpeedValue = document.getElementById('starSpeedYSpeedValue');
 const starColorPicker = document.getElementById('starColorPicker');
 const starContrastSlider = document.getElementById('starContrastSlider');
 const starContrastValue = document.getElementById('starContrastValue');
@@ -749,8 +779,20 @@ starsToggle.addEventListener('click', () => {
 });
 
 // Star direction joystick
-function updateStarJoystick(normX, normY) {
+function updateStarJoystick(normX, normY, fromAuto) {
     const maxSpeed = 5;
+    if (!fromAuto) {
+        if (config.starSpeedXAutoEnabled) {
+            config.starSpeedXAutoEnabled = false;
+            starSpeedXAutoToggle.textContent = 'Off';
+            setStarSpeedXAutoVisibility(false);
+        }
+        if (config.starSpeedYAutoEnabled) {
+            config.starSpeedYAutoEnabled = false;
+            starSpeedYAutoToggle.textContent = 'Off';
+            setStarSpeedYAutoVisibility(false);
+        }
+    }
     config.starSpeedX = normX * maxSpeed;
     config.starSpeedY = normY * maxSpeed;
     starSpeedDisplay.textContent = `${config.starSpeedX.toFixed(1)}, ${config.starSpeedY.toFixed(1)}`;
@@ -792,6 +834,80 @@ window.addEventListener('touchend', () => { joystickDragging = false; });
 
 starJoystick.addEventListener('dblclick', () => {
     updateStarJoystick(0, 0);
+});
+
+// Star speed X automation
+function setStarSpeedXAutoVisibility(show) {
+    starSpeedXMinGroup.style.display = show ? '' : 'none';
+    starSpeedXMaxGroup.style.display = show ? '' : 'none';
+    starSpeedXSpeedGroup.style.display = show ? '' : 'none';
+}
+
+starSpeedXAutoToggle.addEventListener('click', () => {
+    config.starSpeedXAutoEnabled = !config.starSpeedXAutoEnabled;
+    starSpeedXAutoToggle.textContent = config.starSpeedXAutoEnabled ? 'On' : 'Off';
+    setStarSpeedXAutoVisibility(config.starSpeedXAutoEnabled);
+    if (config.starSpeedXAutoEnabled) config.starSpeedXAutoTime = 0;
+});
+
+function updateStarSpeedXMin(val) {
+    config.starSpeedXMin = val;
+    if (config.starSpeedXMin > config.starSpeedXMax) config.starSpeedXMin = config.starSpeedXMax;
+    starSpeedXMinSlider.value = config.starSpeedXMin;
+    starSpeedXMinInput.value = config.starSpeedXMin.toFixed(1);
+}
+starSpeedXMinSlider.addEventListener('input', (e) => updateStarSpeedXMin(parseFloat(e.target.value)));
+starSpeedXMinInput.addEventListener('input', (e) => updateStarSpeedXMin(parseFloat(e.target.value) || 0));
+
+function updateStarSpeedXMax(val) {
+    config.starSpeedXMax = val;
+    if (config.starSpeedXMax < config.starSpeedXMin) config.starSpeedXMax = config.starSpeedXMin;
+    starSpeedXMaxSlider.value = config.starSpeedXMax;
+    starSpeedXMaxInput.value = config.starSpeedXMax.toFixed(1);
+}
+starSpeedXMaxSlider.addEventListener('input', (e) => updateStarSpeedXMax(parseFloat(e.target.value)));
+starSpeedXMaxInput.addEventListener('input', (e) => updateStarSpeedXMax(parseFloat(e.target.value) || 0));
+
+starSpeedXSpeedSlider.addEventListener('input', (e) => {
+    config.starSpeedXSpeed = parseFloat(e.target.value);
+    starSpeedXSpeedValue.textContent = config.starSpeedXSpeed.toFixed(1) + 'x';
+});
+
+// Star speed Y automation
+function setStarSpeedYAutoVisibility(show) {
+    starSpeedYMinGroup.style.display = show ? '' : 'none';
+    starSpeedYMaxGroup.style.display = show ? '' : 'none';
+    starSpeedYSpeedGroup.style.display = show ? '' : 'none';
+}
+
+starSpeedYAutoToggle.addEventListener('click', () => {
+    config.starSpeedYAutoEnabled = !config.starSpeedYAutoEnabled;
+    starSpeedYAutoToggle.textContent = config.starSpeedYAutoEnabled ? 'On' : 'Off';
+    setStarSpeedYAutoVisibility(config.starSpeedYAutoEnabled);
+    if (config.starSpeedYAutoEnabled) config.starSpeedYAutoTime = 0;
+});
+
+function updateStarSpeedYMin(val) {
+    config.starSpeedYMin = val;
+    if (config.starSpeedYMin > config.starSpeedYMax) config.starSpeedYMin = config.starSpeedYMax;
+    starSpeedYMinSlider.value = config.starSpeedYMin;
+    starSpeedYMinInput.value = config.starSpeedYMin.toFixed(1);
+}
+starSpeedYMinSlider.addEventListener('input', (e) => updateStarSpeedYMin(parseFloat(e.target.value)));
+starSpeedYMinInput.addEventListener('input', (e) => updateStarSpeedYMin(parseFloat(e.target.value) || 0));
+
+function updateStarSpeedYMax(val) {
+    config.starSpeedYMax = val;
+    if (config.starSpeedYMax < config.starSpeedYMin) config.starSpeedYMax = config.starSpeedYMin;
+    starSpeedYMaxSlider.value = config.starSpeedYMax;
+    starSpeedYMaxInput.value = config.starSpeedYMax.toFixed(1);
+}
+starSpeedYMaxSlider.addEventListener('input', (e) => updateStarSpeedYMax(parseFloat(e.target.value)));
+starSpeedYMaxInput.addEventListener('input', (e) => updateStarSpeedYMax(parseFloat(e.target.value) || 0));
+
+starSpeedYSpeedSlider.addEventListener('input', (e) => {
+    config.starSpeedYSpeed = parseFloat(e.target.value);
+    starSpeedYSpeedValue.textContent = config.starSpeedYSpeed.toFixed(1) + 'x';
 });
 
 starColorPicker.addEventListener('input', (e) => {
@@ -1152,6 +1268,16 @@ resetBtn.addEventListener('click', () => {
     config.starsEnabled = false;
     config.starSpeedX = 0.3;
     config.starSpeedY = 0;
+    config.starSpeedXAutoEnabled = false;
+    config.starSpeedXMin = -3;
+    config.starSpeedXMax = 3;
+    config.starSpeedXSpeed = 1.0;
+    config.starSpeedXAutoTime = 0;
+    config.starSpeedYAutoEnabled = false;
+    config.starSpeedYMin = -3;
+    config.starSpeedYMax = 3;
+    config.starSpeedYSpeed = 1.0;
+    config.starSpeedYAutoTime = 0;
     config.starColor = '#ffffff';
     config.starContrast = 100;
     config.starSize = 1.0;
@@ -1241,6 +1367,22 @@ resetBtn.addEventListener('click', () => {
     trailAmountGroup.style.display = 'none';
     starsToggle.textContent = 'Off';
     updateStarJoystick(0.3 / 5, 0);
+    starSpeedXAutoToggle.textContent = 'Off';
+    setStarSpeedXAutoVisibility(false);
+    starSpeedXMinSlider.value = -3;
+    starSpeedXMinInput.value = '-3.0';
+    starSpeedXMaxSlider.value = 3;
+    starSpeedXMaxInput.value = '3.0';
+    starSpeedXSpeedSlider.value = 1.0;
+    starSpeedXSpeedValue.textContent = '1.0x';
+    starSpeedYAutoToggle.textContent = 'Off';
+    setStarSpeedYAutoVisibility(false);
+    starSpeedYMinSlider.value = -3;
+    starSpeedYMinInput.value = '-3.0';
+    starSpeedYMaxSlider.value = 3;
+    starSpeedYMaxInput.value = '3.0';
+    starSpeedYSpeedSlider.value = 1.0;
+    starSpeedYSpeedValue.textContent = '1.0x';
     starColorPicker.value = '#ffffff';
     starContrastSlider.value = 100;
     starContrastValue.textContent = '100%';
@@ -1349,6 +1491,19 @@ function renderScene(dt) {
     const effectiveBackground = Sequencer.getColorBlend(BACKGROUND, 'background');
     const effectiveStarColor = Sequencer.getColorBlend(config.starColor, 'starColor');
     const effectiveStrokeColor = Sequencer.getColorBlend(config.strokeColor, 'strokeColor');
+
+    if (config.starSpeedXAutoEnabled) {
+        config.starSpeedXAutoTime += dt * config.starSpeedXSpeed;
+        const sineValue = Math.sin(config.starSpeedXAutoTime * Math.PI);
+        config.starSpeedX = config.starSpeedXMin + (config.starSpeedXMax - config.starSpeedXMin) * (sineValue + 1) / 2;
+        updateStarJoystick(config.starSpeedX / 5, config.starSpeedY / 5, true);
+    }
+    if (config.starSpeedYAutoEnabled) {
+        config.starSpeedYAutoTime += dt * config.starSpeedYSpeed;
+        const sineValue = Math.sin(config.starSpeedYAutoTime * Math.PI);
+        config.starSpeedY = config.starSpeedYMin + (config.starSpeedYMax - config.starSpeedYMin) * (sineValue + 1) / 2;
+        updateStarJoystick(config.starSpeedX / 5, config.starSpeedY / 5, true);
+    }
 
     eraseStars(effectiveBackground);
     updateStars(dt);
