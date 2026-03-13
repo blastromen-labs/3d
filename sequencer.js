@@ -43,6 +43,7 @@ const Sequencer = (() => {
         { id: 'none', label: 'None' },
         { id: 'zoom', label: 'Zoom' },
         { id: 'offsetY', label: 'Y Position' },
+        { id: 'objectDistance', label: 'Y Distance' },
         { id: 'speedX', label: 'X Spin' },
         { id: 'speedY', label: 'Y Spin' },
         { id: 'speedZ', label: 'Z Spin' },

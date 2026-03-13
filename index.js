@@ -1539,10 +1539,11 @@ function renderScene(dt) {
     }
 
     // Build object list with Y offsets and scales
+    const effectiveObjDistance = config.objectDistance + Sequencer.getModOffset('objectDistance');
     const objectsToRender = [];
     if (config.objectCount >= 2) {
-        objectsToRender.push({ model: activeModel, yOffset: config.objectDistance / 2, scale: config.obj1Scale });
-        objectsToRender.push({ model: secondModel, yOffset: -config.objectDistance / 2, scale: config.obj2Scale });
+        objectsToRender.push({ model: activeModel, yOffset: effectiveObjDistance / 2, scale: config.obj1Scale });
+        objectsToRender.push({ model: secondModel, yOffset: -effectiveObjDistance / 2, scale: config.obj2Scale });
     } else {
         objectsToRender.push({ model: activeModel, yOffset: 0, scale: config.obj1Scale });
     }
