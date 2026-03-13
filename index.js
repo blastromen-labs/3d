@@ -264,9 +264,45 @@ let config = {
     offsetYMax: 0.5,
     offsetYSpeed: 1.0,
     offsetYAutoTime: 0,
+    morphEnabled: false,
+    morphTarget: 'pyramid',
+    morphSpeed: 0.5,
 };
 
 let dz = focalLength;
+
+// Morph animation state
+let morphTime = 0;
+
+function computeMorphedModel(primary, secondary, t) {
+    const pVs = primary.vs;
+    const sVs = secondary.vs;
+    const maxLen = Math.max(pVs.length, sVs.length);
+
+    const centroid = (vs) => {
+        let cx = 0, cy = 0, cz = 0;
+        for (const v of vs) { cx += v.x; cy += v.y; cz += v.z; }
+        const n = vs.length;
+        return { x: cx / n, y: cy / n, z: cz / n };
+    };
+
+    const pC = centroid(pVs);
+    const sC = centroid(sVs);
+
+    const vs = [];
+    for (let i = 0; i < maxLen; i++) {
+        const pv = i < pVs.length ? pVs[i] : pC;
+        const sv = i < sVs.length ? sVs[i] : sC;
+        vs.push({
+            x: pv.x + (sv.x - pv.x) * t,
+            y: pv.y + (sv.y - pv.y) * t,
+            z: pv.z + (sv.z - pv.z) * t,
+        });
+    }
+
+    const fs = t < 0.5 ? primary.fs : secondary.fs;
+    return { vs, fs };
+}
 
 // Star field system
 const stars = [];
@@ -375,6 +411,10 @@ const starColorPicker = document.getElementById('starColorPicker');
 const starCountSlider = document.getElementById('starCountSlider');
 const starCountValue = document.getElementById('starCountValue');
 const modelPresetSelect = document.getElementById('modelPreset');
+const morphToggle = document.getElementById('morphToggle');
+const morphTargetSelect = document.getElementById('morphTarget');
+const morphSpeedSlider = document.getElementById('morphSpeedSlider');
+const morphSpeedValue = document.getElementById('morphSpeedValue');
 const editModelBtn = document.getElementById('editModelBtn');
 const savePresetBtn = document.getElementById('savePresetBtn');
 const modelEditorModal = document.getElementById('modelEditorModal');
@@ -646,6 +686,23 @@ modelPresetSelect.addEventListener('change', (e) => {
     loadModel(selectedPreset);
 });
 
+// Morph controls
+morphToggle.addEventListener('click', () => {
+    config.morphEnabled = !config.morphEnabled;
+    morphToggle.textContent = config.morphEnabled ? 'On' : 'Off';
+    if (config.morphEnabled) morphTime = 0;
+});
+
+morphTargetSelect.addEventListener('change', (e) => {
+    config.morphTarget = e.target.value;
+    morphTime = 0;
+});
+
+morphSpeedSlider.addEventListener('input', (e) => {
+    config.morphSpeed = parseFloat(e.target.value);
+    morphSpeedValue.textContent = config.morphSpeed.toFixed(1) + 'x';
+});
+
 // Initialize with default model
 loadModel('cube');
 modelPresetSelect.value = 'cube';
@@ -890,6 +947,10 @@ resetBtn.addEventListener('click', () => {
     config.offsetYMax = 0.5;
     config.offsetYSpeed = 1.0;
     config.offsetYAutoTime = 0;
+    config.morphEnabled = false;
+    config.morphTarget = 'pyramid';
+    config.morphSpeed = 0.5;
+    morphTime = 0;
 
     speedXSlider.value = 0.1;
     speedYSlider.value = 0.1;
@@ -951,6 +1012,10 @@ resetBtn.addEventListener('click', () => {
     starSpeedValue.textContent = '0.3x';
     loadModel('cube');
     modelPresetSelect.value = 'cube';
+    morphToggle.textContent = 'Off';
+    morphTargetSelect.value = 'pyramid';
+    morphSpeedSlider.value = 0.5;
+    morphSpeedValue.textContent = '0.5x';
 
     dz = fovToFocal(60);
 });
@@ -1032,13 +1097,24 @@ function renderScene(dt) {
     clear(effectiveBackground);
     drawStars(effectiveStarColor);
 
+    // Morph computation
+    let activeModel = currentModel;
+    if (config.morphEnabled) {
+        morphTime += dt * config.morphSpeed;
+        const t = (1 - Math.cos(morphTime * Math.PI)) / 2;
+        const target = modelPresets[config.morphTarget];
+        if (target) {
+            activeModel = computeMorphedModel(currentModel, target, t);
+        }
+    }
+
     const effectiveColors = getEffectiveColors();
     const solidAmount = config.solidMode ? 1 : Sequencer.getSolidAmount();
     const distortAmt = Sequencer.getDistortAmount();
     const dNoise = Sequencer.distortNoise;
 
     function getVertex(vi) {
-        const v = currentModel.vs[vi];
+        const v = activeModel.vs[vi];
         if (distortAmt <= 0) return v;
         const n = dNoise[vi % dNoise.length];
         return {
@@ -1051,7 +1127,7 @@ function renderScene(dt) {
     if (solidAmount > 0) {
         const facesWithDepth = [];
 
-        for (const f of currentModel.fs) {
+        for (const f of activeModel.fs) {
             if (f.length < 3) continue;
 
             const transformedVertices = [];
@@ -1119,7 +1195,7 @@ function renderScene(dt) {
 
     if (solidAmount < 1) {
         let edgeIdx = 0;
-        for (const f of currentModel.fs) {
+        for (const f of activeModel.fs) {
             for (let i = 0; i < f.length; ++i) {
                 const a = getVertex(f[i]);
                 const b = getVertex(f[(i + 1) % f.length]);
