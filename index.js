@@ -261,8 +261,11 @@ let config = {
     strokeColor: '#000000',
     contrast: 70,
     starsEnabled: false,
-    starSpeed: 0.3,
+    starSpeedX: 0.3,
+    starSpeedY: 0,
     starColor: '#ffffff',
+    starContrast: 100,
+    starSize: 1.0,
     starCount: 200,
     zoomAutoEnabled: false,
     zoomMin: 0.8,
@@ -351,14 +354,16 @@ function drawStars(color) {
     const baseG = parseInt(hex.substring(2, 4), 16);
     const baseB = parseInt(hex.substring(4, 6), 16);
 
+    const cf = config.starContrast / 100;
+
     for (const star of stars) {
-        const depth = star.z;
-        const r = Math.floor(baseR * depth);
-        const g = Math.floor(baseG * depth);
-        const b = Math.floor(baseB * depth);
+        const brightness = 1 - cf * (1 - star.z);
+        const r = Math.floor(baseR * brightness);
+        const g = Math.floor(baseG * brightness);
+        const b = Math.floor(baseB * brightness);
         ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
 
-        const size = star.size * (0.5 + depth * 1.5);
+        const size = star.size * (0.5 + star.z * 1.5) * config.starSize;
 
         ctx.beginPath();
         ctx.arc(star.x, star.y, size, 0, Math.PI * 2);
@@ -366,21 +371,18 @@ function drawStars(color) {
     }
 }
 
-// Update star positions (scroll from right to left)
 function updateStars(dt) {
     if (!config.starsEnabled) return;
 
     for (const star of stars) {
-        // Speed based on depth for parallax effect (closer = faster)
-        const speed = (50 + star.z * 150) * config.starSpeed;
+        const depth = 50 + star.z * 150;
+        star.x -= depth * config.starSpeedX * dt;
+        star.y -= depth * config.starSpeedY * dt;
 
-        star.x -= speed * dt;
-
-        // Wrap around when star goes off left edge
-        if (star.x < -10) {
-            star.x = game.width + 10;
-            star.y = Math.random() * game.height;
-        }
+        if (star.x < -10) { star.x = game.width + 10; star.y = Math.random() * game.height; }
+        else if (star.x > game.width + 10) { star.x = -10; star.y = Math.random() * game.height; }
+        if (star.y < -10) { star.y = game.height + 10; star.x = Math.random() * game.width; }
+        else if (star.y > game.height + 10) { star.y = -10; star.x = Math.random() * game.width; }
     }
 }
 
@@ -428,8 +430,14 @@ const strokeColorPicker = document.getElementById('strokeColorPicker');
 const contrastSlider = document.getElementById('contrastSlider');
 const backgroundPicker = document.getElementById('backgroundPicker');
 const starsToggle = document.getElementById('starsToggle');
-const starSpeedSlider = document.getElementById('starSpeedSlider');
+const starJoystick = document.getElementById('starJoystick');
+const starJoystickDot = document.getElementById('starJoystickDot');
+const starSpeedDisplay = document.getElementById('starSpeedDisplay');
 const starColorPicker = document.getElementById('starColorPicker');
+const starContrastSlider = document.getElementById('starContrastSlider');
+const starContrastValue = document.getElementById('starContrastValue');
+const starSizeSlider = document.getElementById('starSizeSlider');
+const starSizeValue = document.getElementById('starSizeValue');
 const starCountSlider = document.getElementById('starCountSlider');
 const starCountValue = document.getElementById('starCountValue');
 const modelPresetSelect = document.getElementById('modelPreset');
@@ -484,7 +492,6 @@ const offsetYMaxInput = document.getElementById('offsetYMaxInput');
 const offsetYSpeedValue = document.getElementById('offsetYSpeedValue');
 const thicknessValue = document.getElementById('thicknessValue');
 const contrastValue = document.getElementById('contrastValue');
-const starSpeedValue = document.getElementById('starSpeedValue');
 
 // X-Axis speed control
 speedXSlider.addEventListener('input', (e) => {
@@ -707,14 +714,64 @@ starsToggle.addEventListener('click', () => {
     starsToggle.textContent = config.starsEnabled ? 'On' : 'Off';
 });
 
-// Star speed control
-starSpeedSlider.addEventListener('input', (e) => {
-    config.starSpeed = parseFloat(e.target.value);
-    starSpeedValue.textContent = config.starSpeed.toFixed(1) + 'x';
+// Star direction joystick
+function updateStarJoystick(normX, normY) {
+    const maxSpeed = 5;
+    config.starSpeedX = normX * maxSpeed;
+    config.starSpeedY = normY * maxSpeed;
+    starSpeedDisplay.textContent = `${config.starSpeedX.toFixed(1)}, ${config.starSpeedY.toFixed(1)}`;
+    const pctX = (normX + 1) / 2 * 100;
+    const pctY = (normY + 1) / 2 * 100;
+    starJoystickDot.style.left = pctX + '%';
+    starJoystickDot.style.top = pctY + '%';
+}
+
+function joystickFromEvent(e) {
+    const rect = starJoystick.getBoundingClientRect();
+    const x = ((e.clientX ?? e.touches[0].clientX) - rect.left) / rect.width;
+    const y = ((e.clientY ?? e.touches[0].clientY) - rect.top) / rect.height;
+    const normX = Math.max(-1, Math.min(1, x * 2 - 1));
+    const normY = Math.max(-1, Math.min(1, y * 2 - 1));
+    updateStarJoystick(normX, normY);
+}
+
+let joystickDragging = false;
+
+starJoystick.addEventListener('mousedown', (e) => {
+    joystickDragging = true;
+    joystickFromEvent(e);
+});
+window.addEventListener('mousemove', (e) => {
+    if (joystickDragging) joystickFromEvent(e);
+});
+window.addEventListener('mouseup', () => { joystickDragging = false; });
+
+starJoystick.addEventListener('touchstart', (e) => {
+    joystickDragging = true;
+    joystickFromEvent(e);
+    e.preventDefault();
+}, { passive: false });
+window.addEventListener('touchmove', (e) => {
+    if (joystickDragging) joystickFromEvent(e);
+}, { passive: false });
+window.addEventListener('touchend', () => { joystickDragging = false; });
+
+starJoystick.addEventListener('dblclick', () => {
+    updateStarJoystick(0, 0);
 });
 
 starColorPicker.addEventListener('input', (e) => {
     config.starColor = e.target.value;
+});
+
+starContrastSlider.addEventListener('input', (e) => {
+    config.starContrast = parseFloat(e.target.value);
+    starContrastValue.textContent = config.starContrast + '%';
+});
+
+starSizeSlider.addEventListener('input', (e) => {
+    config.starSize = parseFloat(e.target.value);
+    starSizeValue.textContent = config.starSize.toFixed(1) + 'x';
 });
 
 starCountSlider.addEventListener('input', (e) => {
@@ -850,7 +907,7 @@ offsetYSpeedValue.textContent = config.offsetYSpeed.toFixed(1) + 'x';
 thicknessValue.textContent = config.wireframeThickness.toFixed(1) + 'px';
 thicknessSlider.value = config.wireframeThickness;
 contrastValue.textContent = config.contrast.toFixed(0) + '%';
-starSpeedValue.textContent = config.starSpeed.toFixed(1) + 'x';
+updateStarJoystick(config.starSpeedX / 5, config.starSpeedY / 5);
 starColorPicker.value = config.starColor;
 starCountValue.textContent = config.starCount;
 starCountSlider.value = config.starCount;
@@ -1059,8 +1116,11 @@ resetBtn.addEventListener('click', () => {
     config.strokeColor = '#000000';
     config.contrast = 70;
     config.starsEnabled = false;
-    config.starSpeed = 0.3;
+    config.starSpeedX = 0.3;
+    config.starSpeedY = 0;
     config.starColor = '#ffffff';
+    config.starContrast = 100;
+    config.starSize = 1.0;
     config.starCount = 200;
     config.zoomAutoEnabled = false;
     config.zoomMin = 0.8;
@@ -1140,8 +1200,12 @@ resetBtn.addEventListener('click', () => {
     BACKGROUND = '#000000';
     solidToggle.textContent = 'Wireframe';
     starsToggle.textContent = 'Off';
-    starSpeedSlider.value = 0.3;
+    updateStarJoystick(0.3 / 5, 0);
     starColorPicker.value = '#ffffff';
+    starContrastSlider.value = 100;
+    starContrastValue.textContent = '100%';
+    starSizeSlider.value = 1.0;
+    starSizeValue.textContent = '1.0x';
     starCountSlider.value = 200;
     starCountValue.textContent = '200';
     initStars();
@@ -1163,7 +1227,6 @@ resetBtn.addEventListener('click', () => {
     offsetYSpeedValue.textContent = '1.0x';
     thicknessValue.textContent = '10.0px';
     contrastValue.textContent = '70%';
-    starSpeedValue.textContent = '0.3x';
     loadModel('cube');
     modelPresetSelect.value = 'cube';
     morphToggle.textContent = 'Off';

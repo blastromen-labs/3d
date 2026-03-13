@@ -271,6 +271,53 @@ textarea {
     font-size: 11px !important;
 }
 
+/* Joystick pad */
+.joystick-pad {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    max-width: 200px;
+    background: var(--color-bg-input);
+    border: 1px solid var(--color-primary);
+    border-radius: var(--border-radius-md);
+    cursor: crosshair;
+    touch-action: none;
+    user-select: none;
+    margin: 0 auto;
+}
+
+.joystick-axis {
+    position: absolute;
+    background: rgba(15, 255, 131, 0.15);
+}
+
+.joystick-axis-x {
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+}
+
+.joystick-axis-y {
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+}
+
+.joystick-dot {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: var(--color-primary);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    box-shadow: 0 0 6px rgba(15, 255, 131, 0.5);
+}
+
 /* Sequencer */
 .sequencer-controls {
     background: var(--color-bg-panel);
