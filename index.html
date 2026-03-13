@@ -403,6 +403,19 @@
         </div>
 
         <div class="control-group">
+            <label>Motion Trail</label>
+            <button id="trailToggle" style="margin-top: 0;">Off</button>
+        </div>
+
+        <div class="control-group" id="trailAmountGroup" style="display: none;">
+            <label>
+                Trail Amount
+                <span class="value-display" id="trailAmountValue">50%</span>
+            </label>
+            <input type="range" id="trailAmountSlider" min="1" max="99" step="1" value="50">
+        </div>
+
+        <div class="control-group">
             <label>Parallax Stars</label>
             <button id="starsToggle" style="margin-top: 0;">Off</button>
         </div>

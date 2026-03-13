@@ -51,8 +51,15 @@ function saveToPreset(presetName) {
 }
 
 function clear(bgColor) {
-    ctx.fillStyle = bgColor || BACKGROUND;
-    ctx.fillRect(0, 0, game.width, game.height);
+    if (config.trailEnabled && config.trailAmount > 0) {
+        ctx.globalAlpha = 1 - config.trailAmount;
+        ctx.fillStyle = bgColor || BACKGROUND;
+        ctx.fillRect(0, 0, game.width, game.height);
+        ctx.globalAlpha = 1;
+    } else {
+        ctx.fillStyle = bgColor || BACKGROUND;
+        ctx.fillRect(0, 0, game.width, game.height);
+    }
 }
 
 function point({ x, y }) {
@@ -292,6 +299,8 @@ let config = {
     objDistMax: 1.0,
     objDistSpeed: 1.0,
     objDistAutoTime: 0,
+    trailEnabled: false,
+    trailAmount: 0.5,
 };
 
 let dz = focalLength;
@@ -706,6 +715,23 @@ contrastSlider.addEventListener('input', (e) => {
 // Background color control
 backgroundPicker.addEventListener('input', (e) => {
     BACKGROUND = e.target.value;
+});
+
+// Trail controls
+const trailToggle = document.getElementById('trailToggle');
+const trailAmountSlider = document.getElementById('trailAmountSlider');
+const trailAmountValue = document.getElementById('trailAmountValue');
+const trailAmountGroup = document.getElementById('trailAmountGroup');
+
+trailToggle.addEventListener('click', () => {
+    config.trailEnabled = !config.trailEnabled;
+    trailToggle.textContent = config.trailEnabled ? 'On' : 'Off';
+    trailAmountGroup.style.display = config.trailEnabled ? '' : 'none';
+});
+
+trailAmountSlider.addEventListener('input', (e) => {
+    config.trailAmount = parseFloat(e.target.value) / 100;
+    trailAmountValue.textContent = e.target.value + '%';
 });
 
 // Stars toggle
@@ -1147,6 +1173,8 @@ resetBtn.addEventListener('click', () => {
     config.objDistMax = 1.0;
     config.objDistSpeed = 1.0;
     config.objDistAutoTime = 0;
+    config.trailEnabled = false;
+    config.trailAmount = 0.5;
     morphTime = 0;
 
     loadSecondModel('torus');
@@ -1199,6 +1227,10 @@ resetBtn.addEventListener('click', () => {
     backgroundPicker.value = '#000000';
     BACKGROUND = '#000000';
     solidToggle.textContent = 'Wireframe';
+    trailToggle.textContent = 'Off';
+    trailAmountSlider.value = 50;
+    trailAmountValue.textContent = '50%';
+    trailAmountGroup.style.display = 'none';
     starsToggle.textContent = 'Off';
     updateStarJoystick(0.3 / 5, 0);
     starColorPicker.value = '#ffffff';
