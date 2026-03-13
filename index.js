@@ -353,7 +353,15 @@ function initStars() {
     }
 }
 
-// Draw stars
+function eraseStars(bgColor) {
+    if (!config.starsEnabled || !config.trailEnabled) return;
+    ctx.fillStyle = bgColor || BACKGROUND;
+    for (const star of stars) {
+        const size = star.size * (0.5 + star.z * 1.5) * config.starSize + 1;
+        ctx.fillRect(star.x - size, star.y - size, size * 2, size * 2);
+    }
+}
+
 function drawStars(color) {
     if (!config.starsEnabled) return;
 
@@ -1342,6 +1350,7 @@ function renderScene(dt) {
     const effectiveStarColor = Sequencer.getColorBlend(config.starColor, 'starColor');
     const effectiveStrokeColor = Sequencer.getColorBlend(config.strokeColor, 'strokeColor');
 
+    eraseStars(effectiveBackground);
     updateStars(dt);
     clear(effectiveBackground);
     drawStars(effectiveStarColor);
