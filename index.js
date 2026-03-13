@@ -50,6 +50,7 @@ function point({ x, y }) {
 
 function line(p1, p2, thickness, color) {
     ctx.lineWidth = thickness || 3;
+    ctx.lineCap = 'round';
     ctx.strokeStyle = color || FOREGROUND;
     ctx.beginPath();
     ctx.moveTo(p1.x, p1.y);
@@ -74,6 +75,7 @@ function polygon(points, color, strokeColor, strokeWidth = 1, fill = true, strok
 
     if (stroke) {
         ctx.lineWidth = strokeWidth;
+        ctx.lineJoin = 'round';
         ctx.strokeStyle = strokeColor;
         ctx.stroke();
     }
