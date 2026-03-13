@@ -10,22 +10,35 @@ console.log(ctx)
 // Access presets from globally loaded presets.js.
 const modelPresets = MODEL_PRESETS;
 
-// Current model being rendered (starts with penguin)
+// Current model being rendered (starts with cube)
 let currentModel = {
     vs: [...modelPresets.cube.vs],
     fs: modelPresets.cube.fs.map(f => [...f])
 };
-
-// Current selected preset name
 let currentPresetName = 'cube';
 
-// Function to switch model
+// Second object model
+let secondModel = {
+    vs: [...modelPresets.torus.vs],
+    fs: modelPresets.torus.fs.map(f => [...f])
+};
+let secondPresetName = 'torus';
+
 function loadModel(presetName) {
     const preset = modelPresets[presetName];
     if (preset) {
         currentModel.vs = [...preset.vs];
         currentModel.fs = preset.fs.map(f => [...f]);
         currentPresetName = presetName;
+    }
+}
+
+function loadSecondModel(presetName) {
+    const preset = modelPresets[presetName];
+    if (preset) {
+        secondModel.vs = [...preset.vs];
+        secondModel.fs = preset.fs.map(f => [...f]);
+        secondPresetName = presetName;
     }
 }
 
@@ -267,6 +280,15 @@ let config = {
     morphEnabled: false,
     morphTarget: 'pyramid',
     morphSpeed: 0.5,
+    objectCount: 1,
+    obj1Scale: 1.0,
+    obj2Scale: 1.0,
+    objectDistance: 0.5,
+    objDistAutoEnabled: false,
+    objDistMin: 0.1,
+    objDistMax: 1.0,
+    objDistSpeed: 1.0,
+    objDistAutoTime: 0,
 };
 
 let dz = focalLength;
@@ -422,6 +444,27 @@ const modelJsonEditor = document.getElementById('modelJsonEditor');
 const applyModelBtn = document.getElementById('applyModelBtn');
 const cancelModelBtn = document.getElementById('cancelModelBtn');
 const jsonError = document.getElementById('jsonError');
+const modelPreset2Select = document.getElementById('modelPreset2');
+const obj2PresetGroup = document.getElementById('obj2PresetGroup');
+const objDistanceGroup = document.getElementById('objDistanceGroup');
+const obj1ScaleSlider = document.getElementById('obj1ScaleSlider');
+const obj1ScaleValue = document.getElementById('obj1ScaleValue');
+const obj2ScaleGroup = document.getElementById('obj2ScaleGroup');
+const obj2ScaleSlider = document.getElementById('obj2ScaleSlider');
+const obj2ScaleValue = document.getElementById('obj2ScaleValue');
+const objDistanceSlider = document.getElementById('objDistanceSlider');
+const objDistanceValue = document.getElementById('objDistanceValue');
+const objDistAutoGroup = document.getElementById('objDistAutoGroup');
+const objDistAutoToggle = document.getElementById('objDistAutoToggle');
+const objDistMinGroup = document.getElementById('objDistMinGroup');
+const objDistMinSlider = document.getElementById('objDistMinSlider');
+const objDistMinInput = document.getElementById('objDistMinInput');
+const objDistMaxGroup = document.getElementById('objDistMaxGroup');
+const objDistMaxSlider = document.getElementById('objDistMaxSlider');
+const objDistMaxInput = document.getElementById('objDistMaxInput');
+const objDistSpeedGroup = document.getElementById('objDistSpeedGroup');
+const objDistSpeedSlider = document.getElementById('objDistSpeedSlider');
+const objDistSpeedValue = document.getElementById('objDistSpeedValue');
 const resetBtn = document.getElementById('resetBtn');
 
 const speedXValue = document.getElementById('speedXValue');
@@ -703,6 +746,91 @@ morphSpeedSlider.addEventListener('input', (e) => {
     morphSpeedValue.textContent = config.morphSpeed.toFixed(1) + 'x';
 });
 
+// Object count buttons
+function updateObjectCount(count) {
+    config.objectCount = count;
+    const show = count >= 2;
+    obj2PresetGroup.style.display = show ? '' : 'none';
+    obj2ScaleGroup.style.display = show ? '' : 'none';
+    objDistanceGroup.style.display = show ? '' : 'none';
+    objDistAutoGroup.style.display = show ? '' : 'none';
+    const showAuto = show && config.objDistAutoEnabled;
+    objDistMinGroup.style.display = showAuto ? '' : 'none';
+    objDistMaxGroup.style.display = showAuto ? '' : 'none';
+    objDistSpeedGroup.style.display = showAuto ? '' : 'none';
+    document.querySelectorAll('.obj-count-btn').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.count) === count);
+    });
+}
+
+document.querySelectorAll('.obj-count-btn').forEach(btn => {
+    btn.addEventListener('click', () => updateObjectCount(parseInt(btn.dataset.count)));
+});
+
+// Object scale controls
+obj1ScaleSlider.addEventListener('input', (e) => {
+    config.obj1Scale = parseFloat(e.target.value);
+    obj1ScaleValue.textContent = config.obj1Scale.toFixed(2) + 'x';
+});
+
+obj2ScaleSlider.addEventListener('input', (e) => {
+    config.obj2Scale = parseFloat(e.target.value);
+    obj2ScaleValue.textContent = config.obj2Scale.toFixed(2) + 'x';
+});
+
+// Second object preset selector
+modelPreset2Select.addEventListener('change', (e) => {
+    loadSecondModel(e.target.value);
+});
+
+// Object Y distance
+objDistanceSlider.addEventListener('input', (e) => {
+    config.objectDistance = parseFloat(e.target.value);
+    objDistanceValue.textContent = config.objectDistance.toFixed(2);
+    if (config.objDistAutoEnabled) {
+        config.objDistAutoEnabled = false;
+        objDistAutoToggle.textContent = 'Off';
+    }
+});
+
+// Distance automation toggle
+objDistAutoToggle.addEventListener('click', () => {
+    config.objDistAutoEnabled = !config.objDistAutoEnabled;
+    objDistAutoToggle.textContent = config.objDistAutoEnabled ? 'On' : 'Off';
+    objDistMinGroup.style.display = config.objDistAutoEnabled ? '' : 'none';
+    objDistMaxGroup.style.display = config.objDistAutoEnabled ? '' : 'none';
+    objDistSpeedGroup.style.display = config.objDistAutoEnabled ? '' : 'none';
+    if (config.objDistAutoEnabled) {
+        config.objDistAutoTime = 0;
+    }
+});
+
+// Distance min control
+function updateObjDistMin(val) {
+    config.objDistMin = val;
+    if (config.objDistMin > config.objDistMax) config.objDistMin = config.objDistMax;
+    objDistMinSlider.value = config.objDistMin;
+    objDistMinInput.value = config.objDistMin.toFixed(2);
+}
+objDistMinSlider.addEventListener('input', (e) => updateObjDistMin(parseFloat(e.target.value)));
+objDistMinInput.addEventListener('input', (e) => updateObjDistMin(parseFloat(e.target.value) || 0));
+
+// Distance max control
+function updateObjDistMax(val) {
+    config.objDistMax = val;
+    if (config.objDistMax < config.objDistMin) config.objDistMax = config.objDistMin;
+    objDistMaxSlider.value = config.objDistMax;
+    objDistMaxInput.value = config.objDistMax.toFixed(2);
+}
+objDistMaxSlider.addEventListener('input', (e) => updateObjDistMax(parseFloat(e.target.value)));
+objDistMaxInput.addEventListener('input', (e) => updateObjDistMax(parseFloat(e.target.value) || 0));
+
+// Distance speed control
+objDistSpeedSlider.addEventListener('input', (e) => {
+    config.objDistSpeed = parseFloat(e.target.value);
+    objDistSpeedValue.textContent = config.objDistSpeed.toFixed(1) + 'x';
+});
+
 // Initialize with default model
 loadModel('cube');
 modelPresetSelect.value = 'cube';
@@ -950,7 +1078,33 @@ resetBtn.addEventListener('click', () => {
     config.morphEnabled = false;
     config.morphTarget = 'pyramid';
     config.morphSpeed = 0.5;
+    config.objectCount = 1;
+    config.obj1Scale = 1.0;
+    config.obj2Scale = 1.0;
+    config.objectDistance = 0.5;
+    config.objDistAutoEnabled = false;
+    config.objDistMin = 0.1;
+    config.objDistMax = 1.0;
+    config.objDistSpeed = 1.0;
+    config.objDistAutoTime = 0;
     morphTime = 0;
+
+    loadSecondModel('torus');
+    modelPreset2Select.value = 'torus';
+    updateObjectCount(1);
+    obj1ScaleSlider.value = 1.0;
+    obj1ScaleValue.textContent = '1.00x';
+    obj2ScaleSlider.value = 1.0;
+    obj2ScaleValue.textContent = '1.00x';
+    objDistanceSlider.value = 0.5;
+    objDistanceValue.textContent = '0.50';
+    objDistAutoToggle.textContent = 'Off';
+    objDistMinSlider.value = 0.1;
+    objDistMinInput.value = '0.10';
+    objDistMaxSlider.value = 1.0;
+    objDistMaxInput.value = '1.00';
+    objDistSpeedSlider.value = 1.0;
+    objDistSpeedValue.textContent = '1.0x';
 
     speedXSlider.value = 0.1;
     speedYSlider.value = 0.1;
@@ -1097,7 +1251,7 @@ function renderScene(dt) {
     clear(effectiveBackground);
     drawStars(effectiveStarColor);
 
-    // Morph computation
+    // Morph computation for object 1
     let activeModel = currentModel;
     if (config.morphEnabled) {
         morphTime += dt * config.morphSpeed;
@@ -1116,13 +1270,31 @@ function renderScene(dt) {
         }
     }
 
+    // Distance automation
+    if (config.objDistAutoEnabled && config.objectCount >= 2) {
+        config.objDistAutoTime += dt * config.objDistSpeed;
+        const sineValue = Math.sin(config.objDistAutoTime * Math.PI);
+        config.objectDistance = config.objDistMin + (config.objDistMax - config.objDistMin) * (sineValue + 1) / 2;
+        objDistanceSlider.value = config.objectDistance;
+        objDistanceValue.textContent = config.objectDistance.toFixed(2);
+    }
+
+    // Build object list with Y offsets and scales
+    const objectsToRender = [];
+    if (config.objectCount >= 2) {
+        objectsToRender.push({ model: activeModel, yOffset: config.objectDistance / 2, scale: config.obj1Scale });
+        objectsToRender.push({ model: secondModel, yOffset: -config.objectDistance / 2, scale: config.obj2Scale });
+    } else {
+        objectsToRender.push({ model: activeModel, yOffset: 0, scale: config.obj1Scale });
+    }
+
     const effectiveColors = getEffectiveColors();
     const solidAmount = config.solidMode ? 1 : Sequencer.getSolidAmount();
     const distortAmt = Sequencer.getDistortAmount();
     const dNoise = Sequencer.distortNoise;
 
-    function getVertex(vi) {
-        const v = activeModel.vs[vi];
+    function getVertex(model, vi) {
+        const v = model.vs[vi];
         if (distortAmt <= 0) return v;
         const n = dNoise[vi % dNoise.length];
         return {
@@ -1135,47 +1307,51 @@ function renderScene(dt) {
     if (solidAmount > 0) {
         const facesWithDepth = [];
 
-        for (const f of activeModel.fs) {
-            if (f.length < 3) continue;
+        for (const obj of objectsToRender) {
+            for (const f of obj.model.fs) {
+                if (f.length < 3) continue;
 
-            const transformedVertices = [];
-            let allValid = true;
+                const transformedVertices = [];
+                let allValid = true;
 
-            for (let i = 0; i < f.length; i++) {
-                const v = getVertex(f[i]);
-                const rotated = rotate_xyz(v, currentAngleX, currentAngleY, currentAngleZ);
-                const translated = translate_z(rotated, dz);
+                for (let i = 0; i < f.length; i++) {
+                    const v = getVertex(obj.model, f[i]);
+                    const s = obj.scale;
+                    const offset = { x: v.x * s, y: v.y * s + obj.yOffset, z: v.z * s };
+                    const rotated = rotate_xyz(offset, currentAngleX, currentAngleY, currentAngleZ);
+                    const translated = translate_z(rotated, dz);
 
-                if (translated.z <= 0.01) {
-                    allValid = false;
-                    break;
+                    if (translated.z <= 0.01) {
+                        allValid = false;
+                        break;
+                    }
+                    transformedVertices.push(translated);
                 }
-                transformedVertices.push(translated);
+
+                if (!allValid) continue;
+
+                const center = calculateCenter(transformedVertices);
+                const normal = calculateNormal(
+                    transformedVertices[0],
+                    transformedVertices[1],
+                    transformedVertices[2]
+                );
+
+                const lightIntensity = Math.abs(normal.z);
+                const depthBrightness = Math.max(0.3, Math.min(1.0, 2.0 / center.z));
+                const contrastFactor = config.contrast / 100;
+                const baseBrightness = 0.4 - (contrastFactor * 0.35);
+                const directionalLight = 0.6 + (contrastFactor * 0.4);
+                const brightness = baseBrightness + (lightIntensity * directionalLight * depthBrightness);
+
+                facesWithDepth.push({
+                    vertices: transformedVertices,
+                    depth: center.z,
+                    brightness: brightness,
+                    faceIndex: facesWithDepth.length,
+                    normal: normal
+                });
             }
-
-            if (!allValid) continue;
-
-            const center = calculateCenter(transformedVertices);
-            const normal = calculateNormal(
-                transformedVertices[0],
-                transformedVertices[1],
-                transformedVertices[2]
-            );
-
-            const lightIntensity = Math.abs(normal.z);
-            const depthBrightness = Math.max(0.3, Math.min(1.0, 2.0 / center.z));
-            const contrastFactor = config.contrast / 100;
-            const baseBrightness = 0.4 - (contrastFactor * 0.35);
-            const directionalLight = 0.6 + (contrastFactor * 0.4);
-            const brightness = baseBrightness + (lightIntensity * directionalLight * depthBrightness);
-
-            facesWithDepth.push({
-                vertices: transformedVertices,
-                depth: center.z,
-                brightness: brightness,
-                faceIndex: facesWithDepth.length,
-                normal: normal
-            });
         }
 
         facesWithDepth.sort((a, b) => b.depth - a.depth);
@@ -1203,40 +1379,46 @@ function renderScene(dt) {
 
     if (solidAmount < 1) {
         let edgeIdx = 0;
-        for (const f of activeModel.fs) {
-            for (let i = 0; i < f.length; ++i) {
-                const a = getVertex(f[i]);
-                const b = getVertex(f[(i + 1) % f.length]);
+        for (const obj of objectsToRender) {
+            for (const f of obj.model.fs) {
+                for (let i = 0; i < f.length; ++i) {
+                    const a = getVertex(obj.model, f[i]);
+                    const b = getVertex(obj.model, f[(i + 1) % f.length]);
+                    const s = obj.scale;
 
-                const rotatedA = rotate_xyz(a, currentAngleX, currentAngleY, currentAngleZ);
-                const rotatedB = rotate_xyz(b, currentAngleX, currentAngleY, currentAngleZ);
+                    const aOff = { x: a.x * s, y: a.y * s + obj.yOffset, z: a.z * s };
+                    const bOff = { x: b.x * s, y: b.y * s + obj.yOffset, z: b.z * s };
 
-                const tA = translate_z(rotatedA, dz);
-                const tB = translate_z(rotatedB, dz);
+                    const rotatedA = rotate_xyz(aOff, currentAngleX, currentAngleY, currentAngleZ);
+                    const rotatedB = rotate_xyz(bOff, currentAngleX, currentAngleY, currentAngleZ);
 
-                if (tA.z <= 0.01 || tB.z <= 0.01) { edgeIdx++; continue; }
+                    const tA = translate_z(rotatedA, dz);
+                    const tB = translate_z(rotatedB, dz);
 
-                const pA = project(tA);
-                const pB = project(tB);
-                pA.y += dy;
-                pB.y += dy;
+                    if (tA.z <= 0.01 || tB.z <= 0.01) { edgeIdx++; continue; }
 
-                const sA = screen(pA);
-                const sB = screen(pB);
+                    const pA = project(tA);
+                    const pB = project(tB);
+                    pA.y += dy;
+                    pB.y += dy;
 
-                let lineColor;
-                if (config.gradientEnabled && effectiveColors.length > 1) {
-                    const grad = ctx.createLinearGradient(sA.x, sA.y, sB.x, sB.y);
-                    for (let c = 0; c < effectiveColors.length; c++) {
-                        grad.addColorStop(c / (effectiveColors.length - 1), effectiveColors[c]);
+                    const sA = screen(pA);
+                    const sB = screen(pB);
+
+                    let lineColor;
+                    if (config.gradientEnabled && effectiveColors.length > 1) {
+                        const grad = ctx.createLinearGradient(sA.x, sA.y, sB.x, sB.y);
+                        for (let c = 0; c < effectiveColors.length; c++) {
+                            grad.addColorStop(c / (effectiveColors.length - 1), effectiveColors[c]);
+                        }
+                        lineColor = grad;
+                    } else {
+                        lineColor = effectiveColors[edgeIdx % effectiveColors.length];
                     }
-                    lineColor = grad;
-                } else {
-                    lineColor = effectiveColors[edgeIdx % effectiveColors.length];
-                }
 
-                line(sA, sB, effectiveThickness, lineColor);
-                edgeIdx++;
+                    line(sA, sB, effectiveThickness, lineColor);
+                    edgeIdx++;
+                }
             }
         }
     }

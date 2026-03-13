@@ -50,7 +50,7 @@ body {
 
 .controls {
     background: var(--color-bg-panel);
-    padding: var(--spacing-lg);
+    padding: 10px;
     border: var(--border-width) solid var(--color-primary);
     border-radius: var(--border-radius-lg);
     height: fit-content;
@@ -60,7 +60,7 @@ body {
 
 .model-controls {
     background: var(--color-bg-panel);
-    padding: var(--spacing-lg);
+    padding: 10px;
     border: var(--border-width) solid var(--color-primary);
     border-radius: var(--border-radius-lg);
     height: fit-content;
@@ -70,7 +70,7 @@ body {
 
 .appearance-controls {
     background: var(--color-bg-panel);
-    padding: var(--spacing-lg);
+    padding: 10px;
     border: var(--border-width) solid var(--color-primary);
     border-radius: var(--border-radius-lg);
     height: fit-content;
@@ -79,19 +79,19 @@ body {
 }
 
 .control-group {
-    margin-bottom: var(--spacing-lg);
+    margin-bottom: 6px;
 }
 
 .control-group label {
     display: block;
-    margin-bottom: var(--spacing-sm);
+    margin-bottom: 2px;
     font-weight: bold;
-    font-size: var(--font-size-md);
+    font-size: 11px;
 }
 
 .control-group input[type="range"] {
     width: 100%;
-    height: 6px;
+    height: 4px;
     background: var(--color-bg-input);
     outline: none;
     border-radius: var(--border-radius-sm);
@@ -100,16 +100,16 @@ body {
 .control-group input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: var(--spacing-lg);
-    height: var(--spacing-lg);
+    width: 14px;
+    height: 14px;
     background: var(--color-primary);
     cursor: pointer;
     border-radius: 50%;
 }
 
 .control-group input[type="range"]::-moz-range-thumb {
-    width: var(--spacing-lg);
-    height: var(--spacing-lg);
+    width: 14px;
+    height: 14px;
     background: var(--color-primary);
     cursor: pointer;
     border-radius: 50%;
@@ -118,32 +118,33 @@ body {
 
 .value-display {
     display: inline-block;
-    margin-left: var(--spacing-md);
-    font-size: var(--font-size-sm);
+    margin-left: 6px;
+    font-size: 11px;
     color: var(--color-primary);
 }
 
 .inline-input {
-    width: 60px;
-    padding: 2px 4px;
+    width: 50px;
+    padding: 1px 3px;
     background: var(--color-bg-input);
     color: var(--color-primary);
     border: 1px solid var(--color-primary);
     border-radius: var(--border-radius-sm);
     font-family: var(--font-mono);
-    font-size: var(--font-size-sm);
+    font-size: 11px;
     text-align: right;
     float: right;
 }
 
 .control-group select {
     width: 100%;
-    padding: var(--spacing-sm);
+    padding: 4px;
     background: var(--color-bg-input);
     color: var(--color-primary);
     border: 1px solid var(--color-primary);
     border-radius: var(--border-radius-md);
     font-family: var(--font-mono);
+    font-size: 11px;
 }
 
 button {
@@ -164,10 +165,23 @@ button:hover {
     color: var(--color-text-dark);
 }
 
+/* Compact buttons inside the three control panels */
+:is(.controls, .model-controls, .appearance-controls) button {
+    padding: 4px 6px;
+    margin-top: 3px;
+    font-size: 11px;
+}
+
 h2 {
     margin-top: 0;
     border-bottom: var(--border-width) solid var(--color-primary);
     padding-bottom: var(--spacing-md);
+}
+
+:is(.controls, .model-controls, .appearance-controls) h2 {
+    font-size: 13px;
+    padding-bottom: 5px;
+    margin-bottom: 6px;
 }
 
 .modal {
@@ -238,14 +252,23 @@ textarea {
 .color-count-btn {
     width: auto !important;
     flex: 1;
-    padding: 6px 0 !important;
+    padding: 3px 0 !important;
     margin-top: 0 !important;
-    font-size: var(--font-size-sm) !important;
+    font-size: 11px !important;
 }
 
-.color-count-btn.active {
+.color-count-btn.active,
+.obj-count-btn.active {
     background: var(--color-primary);
     color: var(--color-text-dark);
+}
+
+.obj-count-btn {
+    width: auto !important;
+    flex: 1;
+    padding: 3px 0 !important;
+    margin-top: 0 !important;
+    font-size: 11px !important;
 }
 
 /* Sequencer */
