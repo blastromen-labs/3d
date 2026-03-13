@@ -1108,6 +1108,14 @@ function renderScene(dt) {
         }
     }
 
+    const morphMod = Sequencer.getMorphMod();
+    if (morphMod.amount > 0 && morphMod.target) {
+        const morphTarget = modelPresets[morphMod.target];
+        if (morphTarget) {
+            activeModel = computeMorphedModel(activeModel, morphTarget, morphMod.amount);
+        }
+    }
+
     const effectiveColors = getEffectiveColors();
     const solidAmount = config.solidMode ? 1 : Sequencer.getSolidAmount();
     const distortAmt = Sequencer.getDistortAmount();

@@ -61,6 +61,17 @@ const Sequencer = (() => {
         { id: 'strokeColor', label: 'Stroke Color' },
     ];
 
+    const MORPH_MOD_TARGETS = [
+        { id: 'cube', label: 'Cube' },
+        { id: 'pyramid', label: 'Pyramid' },
+        { id: 'octahedron', label: 'Octahedron' },
+        { id: 'dodecahedron', label: 'Dodecahedron' },
+        { id: 'icosahedron', label: 'Icosahedron' },
+        { id: 'torus', label: 'Torus' },
+        { id: 'penguin', label: 'Penguin' },
+        { id: 'hand', label: 'Hand' },
+    ];
+
     const tracks = [
         {
             id: 'kick',
@@ -83,6 +94,12 @@ const Sequencer = (() => {
             distortAmount: 0.15,
             distortReturn: 0.4,
             distortEnvelope: 0,
+            morphModEnabled: false,
+            morphModTarget: 'pyramid',
+            morphHold: 0.15,
+            morphReturn: 0.3,
+            morphEnvelope: 0,
+            morphHoldTimer: 0,
         },
         {
             id: 'hihat',
@@ -105,6 +122,12 @@ const Sequencer = (() => {
             distortAmount: 0.15,
             distortReturn: 0.4,
             distortEnvelope: 0,
+            morphModEnabled: false,
+            morphModTarget: 'cube',
+            morphHold: 0.15,
+            morphReturn: 0.3,
+            morphEnvelope: 0,
+            morphHoldTimer: 0,
         },
         {
             id: 'snare',
@@ -127,6 +150,12 @@ const Sequencer = (() => {
             distortAmount: 0.15,
             distortReturn: 0.4,
             distortEnvelope: 0,
+            morphModEnabled: false,
+            morphModTarget: 'octahedron',
+            morphHold: 0.15,
+            morphReturn: 0.3,
+            morphEnvelope: 0,
+            morphHoldTimer: 0,
         },
     ];
 
@@ -227,6 +256,10 @@ const Sequencer = (() => {
                     if (t.distortModEnabled) {
                         t.distortEnvelope = 1;
                     }
+                    if (t.morphModEnabled) {
+                        t.morphEnvelope = 1;
+                        t.morphHoldTimer = t.morphHold;
+                    }
                 }, delay);
             }
         }
@@ -278,6 +311,8 @@ const Sequencer = (() => {
             track.colorEnvelope = 0;
             track.solidEnvelope = 0;
             track.distortEnvelope = 0;
+            track.morphEnvelope = 0;
+            track.morphHoldTimer = 0;
         }
     }
 
@@ -310,6 +345,15 @@ const Sequencer = (() => {
                 track.distortEnvelope *= Math.exp(-distortDecay * dt);
                 if (track.distortEnvelope < 0.005) track.distortEnvelope = 0;
             }
+            if (track.morphEnvelope > 0) {
+                if (track.morphHoldTimer > 0) {
+                    track.morphHoldTimer -= dt;
+                } else {
+                    const morphDecay = track.morphReturn * 10;
+                    track.morphEnvelope *= Math.exp(-morphDecay * dt);
+                    if (track.morphEnvelope < 0.005) track.morphEnvelope = 0;
+                }
+            }
         }
     }
 
@@ -339,6 +383,18 @@ const Sequencer = (() => {
             }
         }
         return total;
+    }
+
+    function getMorphMod() {
+        let maxEnv = 0;
+        let target = null;
+        for (const track of tracks) {
+            if (track.morphModEnabled && track.morphEnvelope > maxEnv) {
+                maxEnv = track.morphEnvelope;
+                target = track.morphModTarget;
+            }
+        }
+        return { amount: maxEnv, target };
     }
 
     function hexToRgb(hex) {
@@ -524,6 +580,10 @@ const Sequencer = (() => {
         return COLOR_MOD_TARGETS.map(t => `<option value="${t.id}">${t.label}</option>`).join('');
     }
 
+    function buildMorphModTargetOptions() {
+        return MORPH_MOD_TARGETS.map(t => `<option value="${t.id}">${t.label}</option>`).join('');
+    }
+
     function initUI() {
         for (const track of tracks) {
             const select = document.getElementById(`seq-mod-target-${track.id}`);
@@ -677,6 +737,47 @@ const Sequencer = (() => {
                     distortRetVal.textContent = track.distortReturn.toFixed(2);
                 });
             }
+
+            const morphToggle = document.getElementById(`seq-morph-toggle-${track.id}`);
+            const morphTargetSel = document.getElementById(`seq-morph-target-${track.id}`);
+            const morphHoldSlider = document.getElementById(`seq-morph-hold-${track.id}`);
+            const morphHoldVal = document.getElementById(`seq-morph-hold-val-${track.id}`);
+            const morphRetSlider = document.getElementById(`seq-morph-return-${track.id}`);
+            const morphRetVal = document.getElementById(`seq-morph-return-val-${track.id}`);
+
+            if (morphToggle) {
+                morphToggle.addEventListener('click', () => {
+                    track.morphModEnabled = !track.morphModEnabled;
+                    morphToggle.textContent = track.morphModEnabled ? 'On' : 'Off';
+                    morphToggle.classList.toggle('active', track.morphModEnabled);
+                });
+            }
+
+            if (morphTargetSel) {
+                morphTargetSel.innerHTML = buildMorphModTargetOptions();
+                morphTargetSel.value = track.morphModTarget;
+                morphTargetSel.addEventListener('change', (e) => {
+                    track.morphModTarget = e.target.value;
+                });
+            }
+
+            if (morphHoldSlider) {
+                morphHoldSlider.value = track.morphHold;
+                morphHoldVal.textContent = track.morphHold.toFixed(2);
+                morphHoldSlider.addEventListener('input', (e) => {
+                    track.morphHold = parseFloat(e.target.value);
+                    morphHoldVal.textContent = track.morphHold.toFixed(2);
+                });
+            }
+
+            if (morphRetSlider) {
+                morphRetSlider.value = track.morphReturn;
+                morphRetVal.textContent = track.morphReturn.toFixed(2);
+                morphRetSlider.addEventListener('input', (e) => {
+                    track.morphReturn = parseFloat(e.target.value);
+                    morphRetVal.textContent = track.morphReturn.toFixed(2);
+                });
+            }
         }
 
         document.addEventListener('mouseup', () => { isPainting = false; });
@@ -710,6 +811,7 @@ const Sequencer = (() => {
                 if (track.colorModEnabled) track.colorEnvelope = 1;
                 if (track.solidModEnabled) track.solidEnvelope = 1;
                 if (track.distortModEnabled) track.distortEnvelope = 1;
+                if (track.morphModEnabled) { track.morphEnvelope = 1; track.morphHoldTimer = track.morphHold; }
             }
         }
     }
@@ -720,6 +822,8 @@ const Sequencer = (() => {
             track.colorEnvelope = 0;
             track.solidEnvelope = 0;
             track.distortEnvelope = 0;
+            track.morphEnvelope = 0;
+            track.morphHoldTimer = 0;
         }
     }
 
@@ -729,6 +833,8 @@ const Sequencer = (() => {
             colorEnvelope: t.colorEnvelope,
             solidEnvelope: t.solidEnvelope,
             distortEnvelope: t.distortEnvelope,
+            morphEnvelope: t.morphEnvelope,
+            morphHoldTimer: t.morphHoldTimer,
         }));
     }
 
@@ -738,6 +844,8 @@ const Sequencer = (() => {
             t.colorEnvelope = saved[i].colorEnvelope;
             t.solidEnvelope = saved[i].solidEnvelope;
             t.distortEnvelope = saved[i].distortEnvelope;
+            t.morphEnvelope = saved[i].morphEnvelope;
+            t.morphHoldTimer = saved[i].morphHoldTimer;
         });
     }
 
@@ -748,6 +856,7 @@ const Sequencer = (() => {
         getColorBlend,
         getSolidAmount,
         getDistortAmount,
+        getMorphMod,
         distortNoise,
         triggerStepSilent,
         resetModulations,
