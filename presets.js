@@ -447,6 +447,46 @@ const MODEL_PRESETS = {
         ]
     },
 
+    icosahedron: {
+        name: "Icosahedron",
+        vs: [
+            {x:  0.00, y:  0.18, z:  0.2912},  // 0
+            {x:  0.00, y:  0.18, z: -0.2912},  // 1
+            {x:  0.00, y: -0.18, z:  0.2912},  // 2
+            {x:  0.00, y: -0.18, z: -0.2912},  // 3
+            {x:  0.18, y:  0.2912, z:  0.00},  // 4
+            {x:  0.18, y: -0.2912, z:  0.00},  // 5
+            {x: -0.18, y:  0.2912, z:  0.00},  // 6
+            {x: -0.18, y: -0.2912, z:  0.00},  // 7
+            {x:  0.2912, y:  0.00, z:  0.18},  // 8
+            {x:  0.2912, y:  0.00, z: -0.18},  // 9
+            {x: -0.2912, y:  0.00, z:  0.18},  // 10
+            {x: -0.2912, y:  0.00, z: -0.18},  // 11
+        ],
+        fs: [
+            [0, 2, 8],
+            [0, 8, 4],
+            [0, 4, 6],
+            [0, 6, 10],
+            [0, 10, 2],
+            [3, 9, 1],
+            [3, 5, 9],
+            [3, 7, 5],
+            [3, 11, 7],
+            [3, 1, 11],
+            [2, 5, 8],
+            [8, 5, 9],
+            [8, 9, 4],
+            [4, 9, 1],
+            [4, 1, 6],
+            [6, 1, 11],
+            [6, 11, 10],
+            [10, 11, 7],
+            [10, 7, 2],
+            [2, 7, 5],
+        ]
+    },
+
     torus: (() => {
         const R = 0.22, r = 0.09, majorSegs = 8, minorSegs = 6;
         const vs = [];
@@ -475,6 +515,47 @@ const MODEL_PRESETS = {
             }
         }
         return { name: "Torus", vs, fs };
+    })(),
+
+    hand: (() => {
+        const outline = [
+            [-0.08, -0.28],  // wrist left
+            [-0.16, -0.16],  // palm left
+            [-0.18,  0.00],  // palm top left
+            [-0.17,  0.12],  // pinky tip left
+            [-0.13,  0.12],  // pinky tip right
+            [-0.12, -0.01],  // pinky-ring gap
+            [-0.11,  0.18],  // ring tip left
+            [-0.07,  0.18],  // ring tip right
+            [-0.06, -0.01],  // ring-middle gap
+            [-0.05,  0.25],  // middle tip left
+            [-0.01,  0.25],  // middle tip right
+            [ 0.00, -0.01],  // middle-index gap
+            [ 0.01,  0.20],  // index tip left
+            [ 0.05,  0.20],  // index tip right
+            [ 0.06, -0.01],  // index base right
+            [ 0.08, -0.06],  // palm-thumb junction
+            [ 0.14,  0.00],  // thumb base outer
+            [ 0.18,  0.10],  // thumb tip outer
+            [ 0.14,  0.12],  // thumb tip inner
+            [ 0.10,  0.03],  // thumb base inner
+            [ 0.06, -0.10],  // palm right
+            [ 0.04, -0.16],  // palm right lower
+            [ 0.00, -0.28],  // wrist right
+        ];
+        const d = 0.04;
+        const n = outline.length;
+        const vs = [];
+        for (const [x, y] of outline) vs.push({ x, y, z: d });
+        for (const [x, y] of outline) vs.push({ x, y, z: -d });
+        const fs = [];
+        fs.push(Array.from({ length: n }, (_, i) => i));
+        fs.push(Array.from({ length: n }, (_, i) => 2 * n - 1 - i));
+        for (let i = 0; i < n; i++) {
+            const ni = (i + 1) % n;
+            fs.push([ni, i, i + n, ni + n]);
+        }
+        return { name: "Hand", vs, fs };
     })(),
 
     custom: {
