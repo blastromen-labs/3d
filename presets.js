@@ -407,6 +407,76 @@ const MODEL_PRESETS = {
         ]
     },
 
+    dodecahedron: {
+        name: "Dodecahedron",
+        vs: [
+            {x:  0.20, y:  0.20, z:  0.20},   // 0
+            {x:  0.20, y:  0.20, z: -0.20},   // 1
+            {x:  0.20, y: -0.20, z:  0.20},   // 2
+            {x:  0.20, y: -0.20, z: -0.20},   // 3
+            {x: -0.20, y:  0.20, z:  0.20},   // 4
+            {x: -0.20, y:  0.20, z: -0.20},   // 5
+            {x: -0.20, y: -0.20, z:  0.20},   // 6
+            {x: -0.20, y: -0.20, z: -0.20},   // 7
+            {x:  0.00, y:  0.1236, z:  0.3236}, // 8
+            {x:  0.00, y:  0.1236, z: -0.3236}, // 9
+            {x:  0.00, y: -0.1236, z:  0.3236}, // 10
+            {x:  0.00, y: -0.1236, z: -0.3236}, // 11
+            {x:  0.1236, y:  0.3236, z:  0.00}, // 12
+            {x:  0.1236, y: -0.3236, z:  0.00}, // 13
+            {x: -0.1236, y:  0.3236, z:  0.00}, // 14
+            {x: -0.1236, y: -0.3236, z:  0.00}, // 15
+            {x:  0.3236, y:  0.00, z:  0.1236}, // 16
+            {x:  0.3236, y:  0.00, z: -0.1236}, // 17
+            {x: -0.3236, y:  0.00, z:  0.1236}, // 18
+            {x: -0.3236, y:  0.00, z: -0.1236}, // 19
+        ],
+        fs: [
+            [0, 8, 4, 14, 12],
+            [8, 0, 16, 2, 10],
+            [0, 16, 17, 1, 12],
+            [4, 8, 10, 6, 18],
+            [19, 18, 4, 14, 5],
+            [9, 1, 12, 14, 5],
+            [7, 19, 5, 9, 11],
+            [3, 17, 1, 9, 11],
+            [13, 2, 16, 17, 3],
+            [15, 6, 10, 2, 13],
+            [19, 18, 6, 15, 7],
+            [15, 7, 11, 3, 13],
+        ]
+    },
+
+    torus: (() => {
+        const R = 0.22, r = 0.09, majorSegs = 8, minorSegs = 6;
+        const vs = [];
+        const fs = [];
+        for (let i = 0; i < majorSegs; i++) {
+            const theta = (2 * Math.PI * i) / majorSegs;
+            for (let j = 0; j < minorSegs; j++) {
+                const phi = (2 * Math.PI * j) / minorSegs;
+                vs.push({
+                    x: (R + r * Math.cos(phi)) * Math.cos(theta),
+                    y: r * Math.sin(phi),
+                    z: (R + r * Math.cos(phi)) * Math.sin(theta),
+                });
+            }
+        }
+        for (let i = 0; i < majorSegs; i++) {
+            const ni = (i + 1) % majorSegs;
+            for (let j = 0; j < minorSegs; j++) {
+                const nj = (j + 1) % minorSegs;
+                fs.push([
+                    i * minorSegs + j,
+                    ni * minorSegs + j,
+                    ni * minorSegs + nj,
+                    i * minorSegs + nj,
+                ]);
+            }
+        }
+        return { name: "Torus", vs, fs };
+    })(),
+
     custom: {
         name: "Custom",
         vs: [

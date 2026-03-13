@@ -51,6 +51,16 @@ const Sequencer = (() => {
         { id: 'angleZ', label: 'Z Angle' },
     ];
 
+    const COLOR_MOD_TARGETS = [
+        { id: 'color1', label: 'Color 1' },
+        { id: 'color2', label: 'Color 2' },
+        { id: 'color3', label: 'Color 3' },
+        { id: 'color4', label: 'Color 4' },
+        { id: 'starColor', label: 'Star Color' },
+        { id: 'background', label: 'Background' },
+        { id: 'strokeColor', label: 'Stroke Color' },
+    ];
+
     const tracks = [
         {
             id: 'kick',
@@ -62,6 +72,7 @@ const Sequencer = (() => {
             modRecovery: 0.5,
             currentMod: 0,
             colorModEnabled: false,
+            colorModTarget: 'color1',
             colorModColor: '#ff2200',
             colorReturn: 0.3,
             colorEnvelope: 0,
@@ -83,6 +94,7 @@ const Sequencer = (() => {
             modRecovery: 0.7,
             currentMod: 0,
             colorModEnabled: false,
+            colorModTarget: 'color1',
             colorModColor: '#00ccff',
             colorReturn: 0.3,
             colorEnvelope: 0,
@@ -104,6 +116,7 @@ const Sequencer = (() => {
             modRecovery: 0.5,
             currentMod: 0,
             colorModEnabled: false,
+            colorModTarget: 'color1',
             colorModColor: '#0044ff',
             colorReturn: 0.3,
             colorEnvelope: 0,
@@ -283,7 +296,7 @@ const Sequencer = (() => {
                 if (Math.abs(track.currentMod) < 0.001) track.currentMod = 0;
             }
             if (track.colorEnvelope > 0) {
-                const colorDecay = track.colorReturn * 3;
+                const colorDecay = track.colorReturn * 20;
                 track.colorEnvelope *= Math.exp(-colorDecay * dt);
                 if (track.colorEnvelope < 0.005) track.colorEnvelope = 0;
             }
@@ -337,12 +350,12 @@ const Sequencer = (() => {
         };
     }
 
-    function getColorBlend(baseHex) {
+    function getColorBlend(baseHex, targetId) {
         const base = hexToRgb(baseHex);
         let r = base.r, g = base.g, b = base.b;
 
         for (const track of tracks) {
-            if (track.colorModEnabled && track.colorEnvelope > 0.005) {
+            if (track.colorModEnabled && track.colorEnvelope > 0.005 && track.colorModTarget === targetId) {
                 const c = hexToRgb(track.colorModColor);
                 const t = track.colorEnvelope;
                 r += (c.r - r) * t;
@@ -507,6 +520,10 @@ const Sequencer = (() => {
         return MOD_TARGETS.map(t => `<option value="${t.id}">${t.label}</option>`).join('');
     }
 
+    function buildColorModTargetOptions() {
+        return COLOR_MOD_TARGETS.map(t => `<option value="${t.id}">${t.label}</option>`).join('');
+    }
+
     function initUI() {
         for (const track of tracks) {
             const select = document.getElementById(`seq-mod-target-${track.id}`);
@@ -571,6 +588,7 @@ const Sequencer = (() => {
             }
 
             const colorToggle = document.getElementById(`seq-color-toggle-${track.id}`);
+            const colorTargetSel = document.getElementById(`seq-color-target-${track.id}`);
             const colorPicker = document.getElementById(`seq-color-picker-${track.id}`);
             const colorRetSlider = document.getElementById(`seq-color-return-${track.id}`);
             const colorRetVal = document.getElementById(`seq-color-return-val-${track.id}`);
@@ -580,6 +598,14 @@ const Sequencer = (() => {
                     track.colorModEnabled = !track.colorModEnabled;
                     colorToggle.textContent = track.colorModEnabled ? 'On' : 'Off';
                     colorToggle.classList.toggle('active', track.colorModEnabled);
+                });
+            }
+
+            if (colorTargetSel) {
+                colorTargetSel.innerHTML = buildColorModTargetOptions();
+                colorTargetSel.value = track.colorModTarget;
+                colorTargetSel.addEventListener('change', (e) => {
+                    track.colorModTarget = e.target.value;
                 });
             }
 

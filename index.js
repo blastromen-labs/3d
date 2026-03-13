@@ -37,9 +37,9 @@ function saveToPreset(presetName) {
     }
 }
 
-function clear() {
-    ctx.fillStyle = BACKGROUND
-    ctx.fillRect(0, 0, game.width, game.height)
+function clear(bgColor) {
+    ctx.fillStyle = bgColor || BACKGROUND;
+    ctx.fillRect(0, 0, game.width, game.height);
 }
 
 function point({ x, y }) {
@@ -249,6 +249,8 @@ let config = {
     contrast: 70,
     starsEnabled: false,
     starSpeed: 0.3,
+    starColor: '#ffffff',
+    starCount: 200,
     zoomAutoEnabled: false,
     zoomMin: 0.8,
     zoomMax: 1.5,
@@ -268,32 +270,37 @@ let dz = focalLength;
 
 // Star field system
 const stars = [];
-const STAR_COUNT = 200;
 
-// Initialize stars
 function initStars() {
     stars.length = 0;
-    for (let i = 0; i < STAR_COUNT; i++) {
+    for (let i = 0; i < config.starCount; i++) {
         stars.push({
             x: Math.random() * game.width,
             y: Math.random() * game.height,
-            z: Math.random(), // 0 to 1, represents depth (0 = far, 1 = near)
+            z: Math.random(),
             size: Math.random() * 2 + 0.5
         });
     }
 }
 
 // Draw stars
-function drawStars() {
+function drawStars(color) {
     if (!config.starsEnabled) return;
 
-    for (const star of stars) {
-        // Brightness based on depth (farther = darker, closer = brighter)
-        const brightness = Math.floor(star.z * 255);
-        ctx.fillStyle = `rgb(${brightness}, ${brightness}, ${brightness})`;
+    const effectiveColor = color || config.starColor;
+    const hex = effectiveColor.replace('#', '');
+    const baseR = parseInt(hex.substring(0, 2), 16);
+    const baseG = parseInt(hex.substring(2, 4), 16);
+    const baseB = parseInt(hex.substring(4, 6), 16);
 
-        // Size based on depth
-        const size = star.size * (0.5 + star.z * 1.5);
+    for (const star of stars) {
+        const depth = star.z;
+        const r = Math.floor(baseR * depth);
+        const g = Math.floor(baseG * depth);
+        const b = Math.floor(baseB * depth);
+        ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+
+        const size = star.size * (0.5 + depth * 1.5);
 
         ctx.beginPath();
         ctx.arc(star.x, star.y, size, 0, Math.PI * 2);
@@ -364,6 +371,9 @@ const contrastSlider = document.getElementById('contrastSlider');
 const backgroundPicker = document.getElementById('backgroundPicker');
 const starsToggle = document.getElementById('starsToggle');
 const starSpeedSlider = document.getElementById('starSpeedSlider');
+const starColorPicker = document.getElementById('starColorPicker');
+const starCountSlider = document.getElementById('starCountSlider');
+const starCountValue = document.getElementById('starCountValue');
 const modelPresetSelect = document.getElementById('modelPreset');
 const editModelBtn = document.getElementById('editModelBtn');
 const savePresetBtn = document.getElementById('savePresetBtn');
@@ -620,6 +630,16 @@ starSpeedSlider.addEventListener('input', (e) => {
     starSpeedValue.textContent = config.starSpeed.toFixed(1) + 'x';
 });
 
+starColorPicker.addEventListener('input', (e) => {
+    config.starColor = e.target.value;
+});
+
+starCountSlider.addEventListener('input', (e) => {
+    config.starCount = parseInt(e.target.value);
+    starCountValue.textContent = config.starCount;
+    initStars();
+});
+
 // Model preset selector
 modelPresetSelect.addEventListener('change', (e) => {
     const selectedPreset = e.target.value;
@@ -646,6 +666,9 @@ thicknessValue.textContent = config.wireframeThickness.toFixed(1) + 'px';
 thicknessSlider.value = config.wireframeThickness;
 contrastValue.textContent = config.contrast.toFixed(0) + '%';
 starSpeedValue.textContent = config.starSpeed.toFixed(1) + 'x';
+starColorPicker.value = config.starColor;
+starCountValue.textContent = config.starCount;
+starCountSlider.value = config.starCount;
 colorPickers.forEach((p, i) => p.value = config.colors[i]);
 updateColorCount(config.colorCount);
 gradientToggle.textContent = config.gradientEnabled ? 'On' : 'Off';
@@ -852,6 +875,8 @@ resetBtn.addEventListener('click', () => {
     config.contrast = 70;
     config.starsEnabled = false;
     config.starSpeed = 0.3;
+    config.starColor = '#ffffff';
+    config.starCount = 200;
     config.zoomAutoEnabled = false;
     config.zoomMin = 0.8;
     config.zoomMax = 1.5;
@@ -901,6 +926,10 @@ resetBtn.addEventListener('click', () => {
     solidToggle.textContent = 'Wireframe';
     starsToggle.textContent = 'Off';
     starSpeedSlider.value = 0.3;
+    starColorPicker.value = '#ffffff';
+    starCountSlider.value = 200;
+    starCountValue.textContent = '200';
+    initStars();
 
     speedXValue.textContent = '0.10x';
     speedYValue.textContent = '0.10x';
@@ -935,7 +964,8 @@ USBStream.initControls(game, () => {
 Sequencer.initUI();
 
 function getEffectiveColors() {
-    return config.colors.slice(0, config.colorCount).map(c => Sequencer.getColorBlend(c));
+    const targetIds = ['color1', 'color2', 'color3', 'color4'];
+    return config.colors.slice(0, config.colorCount).map((c, i) => Sequencer.getColorBlend(c, targetIds[i]));
 }
 
 function createFaceGradient(screenPoints, colors, brightness, contrast) {
@@ -994,9 +1024,13 @@ function renderScene(dt) {
         effectiveThickness = Math.max(0.5, config.wireframeThickness * blended);
     }
 
+    const effectiveBackground = Sequencer.getColorBlend(BACKGROUND, 'background');
+    const effectiveStarColor = Sequencer.getColorBlend(config.starColor, 'starColor');
+    const effectiveStrokeColor = Sequencer.getColorBlend(config.strokeColor, 'strokeColor');
+
     updateStars(dt);
-    clear();
-    drawStars();
+    clear(effectiveBackground);
+    drawStars(effectiveStarColor);
 
     const effectiveColors = getEffectiveColors();
     const solidAmount = config.solidMode ? 1 : Sequencer.getSolidAmount();
@@ -1078,7 +1112,7 @@ function renderScene(dt) {
             }
 
             ctx.globalAlpha = solidAmount;
-            polygon(screenPoints, faceColor, config.strokeColor, effectiveThickness, true, solidAmount >= 1);
+            polygon(screenPoints, faceColor, effectiveStrokeColor, effectiveThickness, true, solidAmount >= 1);
             ctx.globalAlpha = 1;
         }
     }

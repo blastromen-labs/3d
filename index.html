@@ -162,6 +162,8 @@
                 <option value="cube">Cube</option>
                 <option value="pyramid">Pyramid</option>
                 <option value="octahedron">Octahedron</option>
+                <option value="dodecahedron">Dodecahedron</option>
+                <option value="torus">Torus</option>
                 <option value="custom">Custom</option>
             </select>
         </div>
@@ -269,6 +271,19 @@
                 <span class="value-display" id="starSpeedValue">0.3x</span>
             </label>
             <input type="range" id="starSpeedSlider" min="0" max="5" step="0.1" value="0.3">
+        </div>
+
+        <div class="control-group">
+            <label>Star Color</label>
+            <input type="color" id="starColorPicker" value="#ffffff">
+        </div>
+
+        <div class="control-group">
+            <label>
+                Star Count
+                <span class="value-display" id="starCountValue">200</span>
+            </label>
+            <input type="range" id="starCountSlider" min="10" max="1000" step="10" value="200">
         </div>
     </div>
 
@@ -392,6 +407,7 @@
                 <span class="seq-mod-sep"></span>
                 <label>Color</label>
                 <button id="seq-color-toggle-kick" class="seq-color-toggle">Off</button>
+                <select id="seq-color-target-kick" class="seq-color-target"></select>
                 <input type="color" id="seq-color-picker-kick" value="#ff2200" class="seq-color-picker">
                 <label>Fade <span id="seq-color-return-val-kick">0.30</span></label>
                 <input type="range" id="seq-color-return-kick" min="0.02" max="1" step="0.02" value="0.3">
@@ -425,6 +441,7 @@
                 <span class="seq-mod-sep"></span>
                 <label>Color</label>
                 <button id="seq-color-toggle-hihat" class="seq-color-toggle">Off</button>
+                <select id="seq-color-target-hihat" class="seq-color-target"></select>
                 <input type="color" id="seq-color-picker-hihat" value="#00ccff" class="seq-color-picker">
                 <label>Fade <span id="seq-color-return-val-hihat">0.30</span></label>
                 <input type="range" id="seq-color-return-hihat" min="0.02" max="1" step="0.02" value="0.3">
@@ -458,6 +475,7 @@
                 <span class="seq-mod-sep"></span>
                 <label>Color</label>
                 <button id="seq-color-toggle-snare" class="seq-color-toggle">Off</button>
+                <select id="seq-color-target-snare" class="seq-color-target"></select>
                 <input type="color" id="seq-color-picker-snare" value="#0044ff" class="seq-color-picker">
                 <label>Fade <span id="seq-color-return-val-snare">0.30</span></label>
                 <input type="range" id="seq-color-return-snare" min="0.02" max="1" step="0.02" value="0.3">
