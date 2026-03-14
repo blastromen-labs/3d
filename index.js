@@ -394,6 +394,12 @@ let config = {
     objDistAutoTime: 0,
     trailEnabled: false,
     trailAmount: 0.5,
+    synthStripesEnabled: false,
+    synthStripesColor: '#00ffff',
+    synthStripesThickness: 4,
+    synthStripesCount: 6,
+    synthStripesSpeed: 2.0,
+    synthStripesStartY: 0.5,
 };
 
 let dz = focalLength;
@@ -603,6 +609,57 @@ function updateStars(dt) {
 // Initialize stars on load
 initStars();
 
+// Synthwave stripes system
+const SYNTH_STRIPE_MAX_Z = 15;
+const SYNTH_STRIPE_MIN_Z = 0.3;
+const synthStripes = [];
+
+function initSynthStripes() {
+    synthStripes.length = 0;
+    for (let i = 0; i < config.synthStripesCount; i++) {
+        synthStripes.push({
+            z: SYNTH_STRIPE_MIN_Z + (SYNTH_STRIPE_MAX_Z - SYNTH_STRIPE_MIN_Z) * (i / config.synthStripesCount)
+        });
+    }
+}
+
+function updateSynthStripes(dt) {
+    if (!config.synthStripesEnabled) return;
+    for (const stripe of synthStripes) {
+        stripe.z -= config.synthStripesSpeed * dt;
+        if (stripe.z <= SYNTH_STRIPE_MIN_Z) {
+            stripe.z += (SYNTH_STRIPE_MAX_Z - SYNTH_STRIPE_MIN_Z);
+        }
+    }
+}
+
+function drawSynthStripes() {
+    if (!config.synthStripesEnabled) return;
+
+    const horizonY = config.synthStripesStartY * game.height;
+    const groundH = game.height - horizonY;
+    const perspScale = groundH * SYNTH_STRIPE_MIN_Z;
+
+    ctx.strokeStyle = config.synthStripesColor;
+    ctx.lineCap = 'butt';
+    const zRange = SYNTH_STRIPE_MAX_Z - SYNTH_STRIPE_MIN_Z;
+
+    for (const stripe of synthStripes) {
+        const screenY = horizonY + perspScale / stripe.z;
+        if (screenY >= horizonY && screenY <= game.height + config.synthStripesThickness) {
+            const closeness = 1 - (stripe.z - SYNTH_STRIPE_MIN_Z) / zRange;
+            const t = closeness * closeness * closeness * closeness;
+            ctx.lineWidth = 0.5 + config.synthStripesThickness * t;
+            ctx.beginPath();
+            ctx.moveTo(0, screenY);
+            ctx.lineTo(game.width, screenY);
+            ctx.stroke();
+        }
+    }
+}
+
+initSynthStripes();
+
 // Initialize controls
 const speedXSlider = document.getElementById('speedXSlider');
 const speedYSlider = document.getElementById('speedYSlider');
@@ -698,6 +755,21 @@ const starSizeSlider = document.getElementById('starSizeSlider');
 const starSizeValue = document.getElementById('starSizeValue');
 const starCountSlider = document.getElementById('starCountSlider');
 const starCountValue = document.getElementById('starCountValue');
+const synthStripesToggle = document.getElementById('synthStripesToggle');
+const synthStripesColorGroup = document.getElementById('synthStripesColorGroup');
+const synthStripesColorPicker = document.getElementById('synthStripesColorPicker');
+const synthStripesThicknessGroup = document.getElementById('synthStripesThicknessGroup');
+const synthStripesThicknessSlider = document.getElementById('synthStripesThicknessSlider');
+const synthStripesThicknessValueEl = document.getElementById('synthStripesThicknessValue');
+const synthStripesCountGroup = document.getElementById('synthStripesCountGroup');
+const synthStripesCountSlider = document.getElementById('synthStripesCountSlider');
+const synthStripesCountValueEl = document.getElementById('synthStripesCountValue');
+const synthStripesSpeedGroup = document.getElementById('synthStripesSpeedGroup');
+const synthStripesSpeedSlider = document.getElementById('synthStripesSpeedSlider');
+const synthStripesSpeedValueEl = document.getElementById('synthStripesSpeedValue');
+const synthStripesStartYGroup = document.getElementById('synthStripesStartYGroup');
+const synthStripesStartYSlider = document.getElementById('synthStripesStartYSlider');
+const synthStripesStartYValueEl = document.getElementById('synthStripesStartYValue');
 const modelPresetSelect = document.getElementById('modelPreset');
 const morphToggle = document.getElementById('morphToggle');
 const morphTargetSelect = document.getElementById('morphTarget');
@@ -1221,6 +1293,46 @@ starCountSlider.addEventListener('input', (e) => {
     initStars();
 });
 
+// Synthwave stripes controls
+function setSynthStripesVisibility(show) {
+    synthStripesColorGroup.style.display = show ? '' : 'none';
+    synthStripesThicknessGroup.style.display = show ? '' : 'none';
+    synthStripesCountGroup.style.display = show ? '' : 'none';
+    synthStripesSpeedGroup.style.display = show ? '' : 'none';
+    synthStripesStartYGroup.style.display = show ? '' : 'none';
+}
+
+synthStripesToggle.addEventListener('click', () => {
+    config.synthStripesEnabled = !config.synthStripesEnabled;
+    synthStripesToggle.textContent = config.synthStripesEnabled ? 'On' : 'Off';
+    setSynthStripesVisibility(config.synthStripesEnabled);
+});
+
+synthStripesColorPicker.addEventListener('input', (e) => {
+    config.synthStripesColor = e.target.value;
+});
+
+synthStripesThicknessSlider.addEventListener('input', (e) => {
+    config.synthStripesThickness = parseFloat(e.target.value);
+    synthStripesThicknessValueEl.textContent = config.synthStripesThickness.toFixed(1) + 'px';
+});
+
+synthStripesCountSlider.addEventListener('input', (e) => {
+    config.synthStripesCount = parseInt(e.target.value);
+    synthStripesCountValueEl.textContent = config.synthStripesCount;
+    initSynthStripes();
+});
+
+synthStripesSpeedSlider.addEventListener('input', (e) => {
+    config.synthStripesSpeed = parseFloat(e.target.value);
+    synthStripesSpeedValueEl.textContent = config.synthStripesSpeed.toFixed(1) + 'x';
+});
+
+synthStripesStartYSlider.addEventListener('input', (e) => {
+    config.synthStripesStartY = parseFloat(e.target.value) / 100;
+    synthStripesStartYValueEl.textContent = e.target.value + '%';
+});
+
 // Model preset selector
 modelPresetSelect.addEventListener('change', (e) => {
     const selectedPreset = e.target.value;
@@ -1634,6 +1746,12 @@ resetBtn.addEventListener('click', () => {
     config.objDistAutoTime = 0;
     config.trailEnabled = false;
     config.trailAmount = 0.5;
+    config.synthStripesEnabled = false;
+    config.synthStripesColor = '#00ffff';
+    config.synthStripesThickness = 4;
+    config.synthStripesCount = 6;
+    config.synthStripesSpeed = 2.0;
+    config.synthStripesStartY = 0.5;
     morphTime = 0;
 
     loadSecondModel('torus');
@@ -1738,6 +1856,19 @@ resetBtn.addEventListener('click', () => {
     starCountSlider.value = 200;
     starCountValue.textContent = '200';
     initStars();
+
+    synthStripesToggle.textContent = 'Off';
+    setSynthStripesVisibility(false);
+    synthStripesColorPicker.value = '#00ffff';
+    synthStripesThicknessSlider.value = 4;
+    synthStripesThicknessValueEl.textContent = '4.0px';
+    synthStripesCountSlider.value = 6;
+    synthStripesCountValueEl.textContent = '6';
+    synthStripesSpeedSlider.value = 2.0;
+    synthStripesSpeedValueEl.textContent = '2.0x';
+    synthStripesStartYSlider.value = 50;
+    synthStripesStartYValueEl.textContent = '50%';
+    initSynthStripes();
 
     speedXValue.textContent = '0.10x';
     speedYValue.textContent = '0.10x';
@@ -1889,6 +2020,9 @@ function renderScene(dt) {
     updateStars(dt);
     clear(effectiveBackground);
     drawStars(effectiveStarColor);
+
+    updateSynthStripes(dt);
+    drawSynthStripes();
 
     // Morph computation for object 1
     let activeModel = currentModel;
