@@ -349,6 +349,7 @@ let config = {
     strokeColor: '#000000',
     contrast: 70,
     starsEnabled: false,
+    starMode: 'parallax',
     starSpeedX: 0.3,
     starSpeedY: 0,
     starSpeedXAutoEnabled: false,
@@ -365,6 +366,7 @@ let config = {
     starContrast: 100,
     starSize: 1.0,
     starCount: 200,
+    tunnelSpeed: 2.0,
     zoomAutoEnabled: false,
     zoomMin: 0.8,
     zoomMax: 1.5,
@@ -431,6 +433,8 @@ function computeMorphedModel(primary, secondary, t) {
 
 // Star field system
 const stars = [];
+const TUNNEL_MAX_Z = 20;
+const TUNNEL_MIN_Z = 0.15;
 
 function initStars() {
     stars.length = 0;
@@ -439,13 +443,32 @@ function initStars() {
             x: Math.random() * game.width,
             y: Math.random() * game.height,
             z: Math.random(),
+            tx: (Math.random() - 0.5) * 2,
+            ty: (Math.random() - 0.5) * 2,
+            tz: Math.random() * TUNNEL_MAX_Z + TUNNEL_MIN_Z,
             size: Math.random() * 2 + 0.5
         });
     }
 }
 
-function eraseStars(bgColor) {
-    if (!config.starsEnabled || !config.trailEnabled) return;
+function tunnelVanishPoint() {
+    return {
+        cx: game.width / 2 + config.starSpeedX * game.width * 0.1,
+        cy: game.height / 2 + config.starSpeedY * game.height * 0.1
+    };
+}
+
+function tunnelScreenPos(star, cx, cy) {
+    const sx = cx + star.tx * game.width * 0.5 / star.tz;
+    const sy = cy + star.ty * game.height * 0.5 / star.tz;
+    const sz = star.size * config.starSize * 2 / star.tz;
+    return { sx, sy, sz };
+}
+
+// --- Parallax mode ---
+
+function eraseParallaxStars(bgColor) {
+    if (!config.trailEnabled) return;
     ctx.fillStyle = bgColor || BACKGROUND;
     for (const star of stars) {
         const size = star.size * (0.5 + star.z * 1.5) * config.starSize + 1;
@@ -453,9 +476,7 @@ function eraseStars(bgColor) {
     }
 }
 
-function drawStars(color) {
-    if (!config.starsEnabled) return;
-
+function drawParallaxStars(color) {
     const effectiveColor = color || config.starColor;
     const hex = effectiveColor.replace('#', '');
     const baseR = parseInt(hex.substring(0, 2), 16);
@@ -479,9 +500,7 @@ function drawStars(color) {
     }
 }
 
-function updateStars(dt) {
-    if (!config.starsEnabled) return;
-
+function updateParallaxStars(dt) {
     for (const star of stars) {
         const depth = 50 + star.z * 150;
         star.x -= depth * config.starSpeedX * dt;
@@ -492,6 +511,93 @@ function updateStars(dt) {
         if (star.y < -10) { star.y = game.height + 10; star.x = Math.random() * game.width; }
         else if (star.y > game.height + 10) { star.y = -10; star.x = Math.random() * game.width; }
     }
+}
+
+// --- Tunnel mode ---
+
+function eraseTunnelStars(bgColor) {
+    if (!config.trailEnabled) return;
+    ctx.fillStyle = bgColor || BACKGROUND;
+    const { cx, cy } = tunnelVanishPoint();
+    for (const star of stars) {
+        const { sx, sy, sz } = tunnelScreenPos(star, cx, cy);
+        const size = sz + 1;
+        ctx.fillRect(sx - size, sy - size, size * 2, size * 2);
+    }
+}
+
+function drawTunnelStars(color) {
+    const effectiveColor = color || config.starColor;
+    const hex = effectiveColor.replace('#', '');
+    const baseR = parseInt(hex.substring(0, 2), 16);
+    const baseG = parseInt(hex.substring(2, 4), 16);
+    const baseB = parseInt(hex.substring(4, 6), 16);
+
+    const cf = config.starContrast / 100;
+    const { cx, cy } = tunnelVanishPoint();
+
+    for (const star of stars) {
+        const { sx, sy, sz } = tunnelScreenPos(star, cx, cy);
+
+        if (sx < -30 || sx > game.width + 30 || sy < -30 || sy > game.height + 30) continue;
+
+        const brightness = 1 - cf * (star.tz / TUNNEL_MAX_Z);
+        const r = Math.floor(baseR * Math.min(brightness, 1));
+        const g = Math.floor(baseG * Math.min(brightness, 1));
+        const b = Math.floor(baseB * Math.min(brightness, 1));
+        ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+
+        ctx.beginPath();
+        ctx.arc(sx, sy, Math.max(sz, 0.2), 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+function respawnTunnelStar(star) {
+    star.tx = (Math.random() - 0.5) * 2;
+    star.ty = (Math.random() - 0.5) * 2;
+    star.tz = TUNNEL_MAX_Z * (0.8 + Math.random() * 0.2);
+    star.size = Math.random() * 2 + 0.5;
+}
+
+function updateTunnelStars(dt) {
+    if (Math.abs(config.tunnelSpeed) < 0.001) return;
+
+    const { cx, cy } = tunnelVanishPoint();
+
+    for (const star of stars) {
+        star.tz -= config.tunnelSpeed * dt;
+
+        if (star.tz <= TUNNEL_MIN_Z) {
+            respawnTunnelStar(star);
+            continue;
+        }
+
+        const { sx, sy } = tunnelScreenPos(star, cx, cy);
+        if (sx < -100 || sx > game.width + 100 || sy < -100 || sy > game.height + 100) {
+            respawnTunnelStar(star);
+        }
+    }
+}
+
+// --- Star dispatch ---
+
+function eraseStars(bgColor) {
+    if (!config.starsEnabled) return;
+    if (config.starMode === 'tunnel') eraseTunnelStars(bgColor);
+    else eraseParallaxStars(bgColor);
+}
+
+function drawStars(color) {
+    if (!config.starsEnabled) return;
+    if (config.starMode === 'tunnel') drawTunnelStars(color);
+    else drawParallaxStars(color);
+}
+
+function updateStars(dt) {
+    if (!config.starsEnabled) return;
+    if (config.starMode === 'tunnel') updateTunnelStars(dt);
+    else updateParallaxStars(dt);
 }
 
 // Initialize stars on load
@@ -558,6 +664,10 @@ const masterContrastSlider = document.getElementById('masterContrastSlider');
 const masterContrastValue = document.getElementById('masterContrastValue');
 const backgroundPicker = document.getElementById('backgroundPicker');
 const starsToggle = document.getElementById('starsToggle');
+const starModeToggle = document.getElementById('starModeToggle');
+const tunnelSpeedGroup = document.getElementById('tunnelSpeedGroup');
+const tunnelSpeedSlider = document.getElementById('tunnelSpeedSlider');
+const tunnelSpeedValue = document.getElementById('tunnelSpeedValue');
 const starJoystick = document.getElementById('starJoystick');
 const starJoystickDot = document.getElementById('starJoystickDot');
 const starSpeedDisplay = document.getElementById('starSpeedDisplay');
@@ -945,6 +1055,20 @@ starsToggle.addEventListener('click', () => {
     starsToggle.textContent = config.starsEnabled ? 'On' : 'Off';
 });
 
+// Star mode toggle
+starModeToggle.addEventListener('click', () => {
+    config.starMode = config.starMode === 'parallax' ? 'tunnel' : 'parallax';
+    starModeToggle.textContent = config.starMode === 'parallax' ? 'Parallax' : 'Tunnel';
+    tunnelSpeedGroup.style.display = config.starMode === 'tunnel' ? '' : 'none';
+    initStars();
+});
+
+// Tunnel speed slider
+tunnelSpeedSlider.addEventListener('input', (e) => {
+    config.tunnelSpeed = parseFloat(e.target.value);
+    tunnelSpeedValue.textContent = config.tunnelSpeed.toFixed(1) + 'x';
+});
+
 // Star direction joystick
 function updateStarJoystick(normX, normY, fromAuto) {
     const maxSpeed = 5;
@@ -1253,6 +1377,10 @@ strokeColorPicker.value = config.strokeColor;
 backgroundPicker.value = BACKGROUND;
 solidToggle.textContent = 'Wireframe';
 starsToggle.textContent = 'Off';
+starModeToggle.textContent = config.starMode === 'parallax' ? 'Parallax' : 'Tunnel';
+tunnelSpeedGroup.style.display = config.starMode === 'tunnel' ? '' : 'none';
+tunnelSpeedSlider.value = config.tunnelSpeed;
+tunnelSpeedValue.textContent = config.tunnelSpeed.toFixed(1) + 'x';
 
 // Mouse wheel zoom on canvas
 game.addEventListener('wheel', (e) => {
@@ -1461,6 +1589,7 @@ resetBtn.addEventListener('click', () => {
     config.strokeColor = '#000000';
     config.contrast = 70;
     config.starsEnabled = false;
+    config.starMode = 'parallax';
     config.starSpeedX = 0.3;
     config.starSpeedY = 0;
     config.starSpeedXAutoEnabled = false;
@@ -1477,6 +1606,7 @@ resetBtn.addEventListener('click', () => {
     config.starContrast = 100;
     config.starSize = 1.0;
     config.starCount = 200;
+    config.tunnelSpeed = 2.0;
     config.zoomAutoEnabled = false;
     config.zoomMin = 0.8;
     config.zoomMax = 1.5;
@@ -1579,6 +1709,10 @@ resetBtn.addEventListener('click', () => {
     trailAmountValue.textContent = '50%';
     trailAmountGroup.style.display = 'none';
     starsToggle.textContent = 'Off';
+    starModeToggle.textContent = 'Parallax';
+    tunnelSpeedGroup.style.display = 'none';
+    tunnelSpeedSlider.value = 2.0;
+    tunnelSpeedValue.textContent = '2.0x';
     updateStarJoystick(0.3 / 5, 0);
     starSpeedXAutoToggle.textContent = 'Off';
     setStarSpeedXAutoVisibility(false);
