@@ -175,6 +175,65 @@ function brightnessToColor(brightness, baseColor, contrast) {
     return `rgb(${finalR}, ${finalG}, ${finalB})`;
 }
 
+function hexToRgbComponents(hex) {
+    const h = hex.replace('#', '');
+    return [parseInt(h.substring(0, 2), 16), parseInt(h.substring(2, 4), 16), parseInt(h.substring(4, 6), 16)];
+}
+
+function rgbToHsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h, s, l = (max + min) / 2;
+    if (max === min) {
+        h = s = 0;
+    } else {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+        else if (max === g) h = ((b - r) / d + 2) / 6;
+        else h = ((r - g) / d + 4) / 6;
+    }
+    return [h, s, l];
+}
+
+function hslToHex(h, s, l) {
+    let r, g, b;
+    if (s === 0) {
+        r = g = b = l;
+    } else {
+        const hue2rgb = (p, q, t) => {
+            if (t < 0) t += 1;
+            if (t > 1) t -= 1;
+            if (t < 1 / 6) return p + (q - p) * 6 * t;
+            if (t < 1 / 2) return q;
+            if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+            return p;
+        };
+        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        const p = 2 * l - q;
+        r = hue2rgb(p, q, h + 1 / 3);
+        g = hue2rgb(p, q, h);
+        b = hue2rgb(p, q, h - 1 / 3);
+    }
+    const toHex = v => Math.round(Math.min(255, Math.max(0, v * 255))).toString(16).padStart(2, '0');
+    return '#' + toHex(r) + toHex(g) + toHex(b);
+}
+
+function interpolateColorHSL(hex1, hex2, t) {
+    const [r1, g1, b1] = hexToRgbComponents(hex1);
+    const [r2, g2, b2] = hexToRgbComponents(hex2);
+    const [h1, s1, l1] = rgbToHsl(r1, g1, b1);
+    const [h2, s2, l2] = rgbToHsl(r2, g2, b2);
+
+    let dh = h2 - h1;
+    if (dh > 0.5) dh -= 1;
+    if (dh < -0.5) dh += 1;
+    const h = ((h1 + dh * t) % 1 + 1) % 1;
+    const s = s1 + (s2 - s1) * t;
+    const l = l1 + (l2 - l1) * t;
+    return hslToHex(h, s, l);
+}
+
 function screen(p) {
     const size = Math.min(game.width, game.height);
     const offsetX = (game.width - size) / 2;
@@ -265,6 +324,7 @@ let config = {
     colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00'],
     colorCount: 1,
     gradientEnabled: false,
+    gradientVibrancy: 0,
     strokeColor: '#000000',
     contrast: 70,
     starsEnabled: false,
@@ -453,6 +513,8 @@ const colorGroups = [
     document.getElementById('color4Group'),
 ];
 const gradientToggle = document.getElementById('gradientToggle');
+const gradientVibrancySlider = document.getElementById('gradientVibrancySlider');
+const gradientVibrancyValue = document.getElementById('gradientVibrancyValue');
 const strokeColorPicker = document.getElementById('strokeColorPicker');
 const contrastSlider = document.getElementById('contrastSlider');
 const backgroundPicker = document.getElementById('backgroundPicker');
@@ -737,6 +799,12 @@ document.querySelectorAll('.color-count-btn').forEach(btn => {
 gradientToggle.addEventListener('click', () => {
     config.gradientEnabled = !config.gradientEnabled;
     gradientToggle.textContent = config.gradientEnabled ? 'On' : 'Off';
+});
+
+// Gradient vibrancy
+gradientVibrancySlider.addEventListener('input', (e) => {
+    config.gradientVibrancy = parseFloat(e.target.value);
+    gradientVibrancyValue.textContent = config.gradientVibrancy.toFixed(0) + '%';
 });
 
 // Stroke color control
@@ -1064,6 +1132,8 @@ starCountSlider.value = config.starCount;
 colorPickers.forEach((p, i) => p.value = config.colors[i]);
 updateColorCount(config.colorCount);
 gradientToggle.textContent = config.gradientEnabled ? 'On' : 'Off';
+gradientVibrancySlider.value = config.gradientVibrancy;
+gradientVibrancyValue.textContent = config.gradientVibrancy.toFixed(0) + '%';
 strokeColorPicker.value = config.strokeColor;
 backgroundPicker.value = BACKGROUND;
 solidToggle.textContent = 'Wireframe';
@@ -1263,6 +1333,7 @@ resetBtn.addEventListener('click', () => {
     config.colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00'];
     config.colorCount = 1;
     config.gradientEnabled = false;
+    config.gradientVibrancy = 0;
     config.strokeColor = '#000000';
     config.contrast = 70;
     config.starsEnabled = false;
@@ -1356,6 +1427,8 @@ resetBtn.addEventListener('click', () => {
     colorPickers[3].value = '#ffff00';
     updateColorCount(1);
     gradientToggle.textContent = 'Off';
+    gradientVibrancySlider.value = 0;
+    gradientVibrancyValue.textContent = '0%';
     strokeColorPicker.value = '#000000';
     contrastSlider.value = 70;
     backgroundPicker.value = '#000000';
@@ -1432,6 +1505,40 @@ function getEffectiveColors() {
     return config.colors.slice(0, config.colorCount).map((c, i) => Sequencer.getColorBlend(c, targetIds[i]));
 }
 
+function addGradientStops(grad, colors, applyColor) {
+    const vibrancy = config.gradientVibrancy / 100;
+    if (vibrancy > 0 && colors.length > 1) {
+        const subSteps = 16;
+        const totalSegs = colors.length - 1;
+        const power = 1 + vibrancy * 10;
+
+        for (let seg = 0; seg < totalSegs; seg++) {
+            const isLast = seg === totalSegs - 1;
+            for (let j = 0; j <= subSteps; j++) {
+                if (!isLast && j === subSteps) continue;
+                const linearT = j / subSteps;
+                const globalStop = (seg + linearT) / totalSegs;
+
+                // Gain curve: pushes t toward 0 and 1, creating sharp color bands
+                let ct;
+                if (linearT < 0.5) {
+                    ct = 0.5 * Math.pow(2 * linearT, power);
+                } else {
+                    ct = 1 - 0.5 * Math.pow(2 * (1 - linearT), power);
+                }
+
+                const color = interpolateColorHSL(colors[seg], colors[seg + 1], ct);
+                grad.addColorStop(globalStop, applyColor(color));
+            }
+        }
+    } else {
+        for (let i = 0; i < colors.length; i++) {
+            const stop = colors.length === 1 ? 0 : i / (colors.length - 1);
+            grad.addColorStop(stop, applyColor(colors[i]));
+        }
+    }
+}
+
 function createFaceGradient(screenPoints, colors, brightness, contrast) {
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     for (const p of screenPoints) {
@@ -1441,10 +1548,7 @@ function createFaceGradient(screenPoints, colors, brightness, contrast) {
         if (p.y > maxY) maxY = p.y;
     }
     const grad = ctx.createLinearGradient(minX, minY, maxX, maxY);
-    for (let i = 0; i < colors.length; i++) {
-        const stop = colors.length === 1 ? 0 : i / (colors.length - 1);
-        grad.addColorStop(stop, brightnessToColor(brightness, colors[i], contrast));
-    }
+    addGradientStops(grad, colors, c => brightnessToColor(brightness, c, contrast));
     return grad;
 }
 
@@ -1668,9 +1772,7 @@ function renderScene(dt) {
                     let lineColor;
                     if (config.gradientEnabled && effectiveColors.length > 1) {
                         const grad = ctx.createLinearGradient(sA.x, sA.y, sB.x, sB.y);
-                        for (let c = 0; c < effectiveColors.length; c++) {
-                            grad.addColorStop(c / (effectiveColors.length - 1), effectiveColors[c]);
-                        }
+                        addGradientStops(grad, effectiveColors, c => c);
                         lineColor = grad;
                     } else {
                         lineColor = effectiveColors[edgeIdx % effectiveColors.length];
