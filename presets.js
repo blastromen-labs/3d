@@ -563,6 +563,32 @@ const MODEL_PRESETS = {
         return { name: "Torus", vs, fs };
     })(),
 
+    octagonTube: (() => {
+        const segs = 8;
+        const outerR = 0.2, innerR = 0.12, halfH = 0.35;
+        const vs = [];
+        const fs = [];
+
+        for (let i = 0; i < segs; i++) {
+            const angle = (2 * Math.PI * i) / segs;
+            const cos = Math.cos(angle), sin = Math.sin(angle);
+            vs.push({ x: outerR * cos, y:  halfH, z: outerR * sin }); // top outer
+            vs.push({ x: innerR * cos, y:  halfH, z: innerR * sin }); // top inner
+            vs.push({ x: outerR * cos, y: -halfH, z: outerR * sin }); // bottom outer
+            vs.push({ x: innerR * cos, y: -halfH, z: innerR * sin }); // bottom inner
+        }
+
+        for (let i = 0; i < segs; i++) {
+            const cur = i * 4, nxt = ((i + 1) % segs) * 4;
+            fs.push([cur, nxt, nxt + 2, cur + 2]);         // outer wall
+            fs.push([cur + 3, nxt + 3, nxt + 1, cur + 1]); // inner wall
+            fs.push([cur, cur + 1, nxt + 1, nxt]);          // top ring
+            fs.push([cur + 2, nxt + 2, nxt + 3, cur + 3]);  // bottom ring
+        }
+
+        return { name: "Octagon Tube", vs, fs };
+    })(),
+
     hand: (() => {
         const outline = [
             [-0.08, -0.28],  // wrist left

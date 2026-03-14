@@ -69,6 +69,7 @@ const Sequencer = (() => {
         { id: 'dodecahedron', label: 'Dodecahedron' },
         { id: 'icosahedron', label: 'Icosahedron' },
         { id: 'torus', label: 'Torus' },
+        { id: 'octagonTube', label: 'Octagon Tube' },
         { id: 'penguin', label: 'Penguin' },
         { id: 'hand', label: 'Hand' },
     ];
