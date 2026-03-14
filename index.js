@@ -234,6 +234,18 @@ function interpolateColorHSL(hex1, hex2, t) {
     return hslToHex(h, s, l);
 }
 
+function applyMasterColor(hexColor) {
+    const [r, g, b] = hexToRgbComponents(hexColor);
+    let [h, s, l] = rgbToHsl(r, g, b);
+
+    h = ((h + config.masterHue / 360) % 1 + 1) % 1;
+    s = Math.min(1, Math.max(0, s * (config.masterSaturation / 100)));
+    l = Math.min(1, Math.max(0, 0.5 + (l - 0.5) * (config.masterContrast / 100)));
+    l = Math.min(1, Math.max(0, l * (config.masterBrightness / 100)));
+
+    return hslToHex(h, s, l);
+}
+
 function screen(p) {
     const size = Math.min(game.width, game.height);
     const offsetX = (game.width - size) / 2;
@@ -325,6 +337,15 @@ let config = {
     colorCount: 1,
     gradientEnabled: false,
     gradientVibrancy: 0,
+    masterHue: 0,
+    masterHueAutoEnabled: false,
+    masterHueMin: -180,
+    masterHueMax: 180,
+    masterHueSpeed: 1.0,
+    masterHueAutoTime: 0,
+    masterSaturation: 100,
+    masterBrightness: 100,
+    masterContrast: 100,
     strokeColor: '#000000',
     contrast: 70,
     starsEnabled: false,
@@ -517,6 +538,24 @@ const gradientVibrancySlider = document.getElementById('gradientVibrancySlider')
 const gradientVibrancyValue = document.getElementById('gradientVibrancyValue');
 const strokeColorPicker = document.getElementById('strokeColorPicker');
 const contrastSlider = document.getElementById('contrastSlider');
+const masterHueSlider = document.getElementById('masterHueSlider');
+const masterHueValue = document.getElementById('masterHueValue');
+const masterHueAutoToggle = document.getElementById('masterHueAutoToggle');
+const masterHueMinGroup = document.getElementById('masterHueMinGroup');
+const masterHueMinSlider = document.getElementById('masterHueMinSlider');
+const masterHueMinInput = document.getElementById('masterHueMinInput');
+const masterHueMaxGroup = document.getElementById('masterHueMaxGroup');
+const masterHueMaxSlider = document.getElementById('masterHueMaxSlider');
+const masterHueMaxInput = document.getElementById('masterHueMaxInput');
+const masterHueSpeedGroup = document.getElementById('masterHueSpeedGroup');
+const masterHueSpeedSlider = document.getElementById('masterHueSpeedSlider');
+const masterHueSpeedValue = document.getElementById('masterHueSpeedValue');
+const masterSaturationSlider = document.getElementById('masterSaturationSlider');
+const masterSaturationValue = document.getElementById('masterSaturationValue');
+const masterBrightnessSlider = document.getElementById('masterBrightnessSlider');
+const masterBrightnessValue = document.getElementById('masterBrightnessValue');
+const masterContrastSlider = document.getElementById('masterContrastSlider');
+const masterContrastValue = document.getElementById('masterContrastValue');
 const backgroundPicker = document.getElementById('backgroundPicker');
 const starsToggle = document.getElementById('starsToggle');
 const starJoystick = document.getElementById('starJoystick');
@@ -816,6 +855,66 @@ strokeColorPicker.addEventListener('input', (e) => {
 contrastSlider.addEventListener('input', (e) => {
     config.contrast = parseFloat(e.target.value);
     contrastValue.textContent = config.contrast.toFixed(0) + '%';
+});
+
+// Master color controls
+masterHueSlider.addEventListener('input', (e) => {
+    config.masterHue = parseFloat(e.target.value);
+    masterHueValue.textContent = config.masterHue.toFixed(0) + '°';
+    if (config.masterHueAutoEnabled) {
+        config.masterHueAutoEnabled = false;
+        masterHueAutoToggle.textContent = 'Off';
+        setMasterHueAutoVisibility(false);
+    }
+});
+
+function setMasterHueAutoVisibility(show) {
+    masterHueMinGroup.style.display = show ? '' : 'none';
+    masterHueMaxGroup.style.display = show ? '' : 'none';
+    masterHueSpeedGroup.style.display = show ? '' : 'none';
+}
+
+masterHueAutoToggle.addEventListener('click', () => {
+    config.masterHueAutoEnabled = !config.masterHueAutoEnabled;
+    masterHueAutoToggle.textContent = config.masterHueAutoEnabled ? 'On' : 'Off';
+    setMasterHueAutoVisibility(config.masterHueAutoEnabled);
+    if (config.masterHueAutoEnabled) config.masterHueAutoTime = 0;
+});
+
+function updateMasterHueMin(val) {
+    config.masterHueMin = val;
+    if (config.masterHueMin > config.masterHueMax) config.masterHueMin = config.masterHueMax;
+    masterHueMinSlider.value = config.masterHueMin;
+    masterHueMinInput.value = config.masterHueMin.toFixed(0);
+}
+masterHueMinSlider.addEventListener('input', (e) => updateMasterHueMin(parseFloat(e.target.value)));
+masterHueMinInput.addEventListener('input', (e) => updateMasterHueMin(parseFloat(e.target.value) || -180));
+
+function updateMasterHueMax(val) {
+    config.masterHueMax = val;
+    if (config.masterHueMax < config.masterHueMin) config.masterHueMax = config.masterHueMin;
+    masterHueMaxSlider.value = config.masterHueMax;
+    masterHueMaxInput.value = config.masterHueMax.toFixed(0);
+}
+masterHueMaxSlider.addEventListener('input', (e) => updateMasterHueMax(parseFloat(e.target.value)));
+masterHueMaxInput.addEventListener('input', (e) => updateMasterHueMax(parseFloat(e.target.value) || 180));
+
+masterHueSpeedSlider.addEventListener('input', (e) => {
+    config.masterHueSpeed = parseFloat(e.target.value);
+    masterHueSpeedValue.textContent = config.masterHueSpeed.toFixed(1) + 'x';
+});
+
+masterSaturationSlider.addEventListener('input', (e) => {
+    config.masterSaturation = parseFloat(e.target.value);
+    masterSaturationValue.textContent = config.masterSaturation.toFixed(0) + '%';
+});
+masterBrightnessSlider.addEventListener('input', (e) => {
+    config.masterBrightness = parseFloat(e.target.value);
+    masterBrightnessValue.textContent = config.masterBrightness.toFixed(0) + '%';
+});
+masterContrastSlider.addEventListener('input', (e) => {
+    config.masterContrast = parseFloat(e.target.value);
+    masterContrastValue.textContent = config.masterContrast.toFixed(0) + '%';
 });
 
 // Background color control
@@ -1134,6 +1233,22 @@ updateColorCount(config.colorCount);
 gradientToggle.textContent = config.gradientEnabled ? 'On' : 'Off';
 gradientVibrancySlider.value = config.gradientVibrancy;
 gradientVibrancyValue.textContent = config.gradientVibrancy.toFixed(0) + '%';
+masterHueSlider.value = config.masterHue;
+masterHueValue.textContent = config.masterHue.toFixed(0) + '°';
+masterHueAutoToggle.textContent = config.masterHueAutoEnabled ? 'On' : 'Off';
+setMasterHueAutoVisibility(config.masterHueAutoEnabled);
+masterHueMinSlider.value = config.masterHueMin;
+masterHueMinInput.value = config.masterHueMin.toFixed(0);
+masterHueMaxSlider.value = config.masterHueMax;
+masterHueMaxInput.value = config.masterHueMax.toFixed(0);
+masterHueSpeedSlider.value = config.masterHueSpeed;
+masterHueSpeedValue.textContent = config.masterHueSpeed.toFixed(1) + 'x';
+masterSaturationSlider.value = config.masterSaturation;
+masterSaturationValue.textContent = config.masterSaturation.toFixed(0) + '%';
+masterBrightnessSlider.value = config.masterBrightness;
+masterBrightnessValue.textContent = config.masterBrightness.toFixed(0) + '%';
+masterContrastSlider.value = config.masterContrast;
+masterContrastValue.textContent = config.masterContrast.toFixed(0) + '%';
 strokeColorPicker.value = config.strokeColor;
 backgroundPicker.value = BACKGROUND;
 solidToggle.textContent = 'Wireframe';
@@ -1334,6 +1449,15 @@ resetBtn.addEventListener('click', () => {
     config.colorCount = 1;
     config.gradientEnabled = false;
     config.gradientVibrancy = 0;
+    config.masterHue = 0;
+    config.masterHueAutoEnabled = false;
+    config.masterHueMin = -180;
+    config.masterHueMax = 180;
+    config.masterHueSpeed = 1.0;
+    config.masterHueAutoTime = 0;
+    config.masterSaturation = 100;
+    config.masterBrightness = 100;
+    config.masterContrast = 100;
     config.strokeColor = '#000000';
     config.contrast = 70;
     config.starsEnabled = false;
@@ -1429,6 +1553,22 @@ resetBtn.addEventListener('click', () => {
     gradientToggle.textContent = 'Off';
     gradientVibrancySlider.value = 0;
     gradientVibrancyValue.textContent = '0%';
+    masterHueSlider.value = 0;
+    masterHueValue.textContent = '0°';
+    masterHueAutoToggle.textContent = 'Off';
+    setMasterHueAutoVisibility(false);
+    masterHueMinSlider.value = -180;
+    masterHueMinInput.value = '-180';
+    masterHueMaxSlider.value = 180;
+    masterHueMaxInput.value = '180';
+    masterHueSpeedSlider.value = 1.0;
+    masterHueSpeedValue.textContent = '1.0x';
+    masterSaturationSlider.value = 100;
+    masterSaturationValue.textContent = '100%';
+    masterBrightnessSlider.value = 100;
+    masterBrightnessValue.textContent = '100%';
+    masterContrastSlider.value = 100;
+    masterContrastValue.textContent = '100%';
     strokeColorPicker.value = '#000000';
     contrastSlider.value = 70;
     backgroundPicker.value = '#000000';
@@ -1502,7 +1642,9 @@ Sequencer.initUI();
 
 function getEffectiveColors() {
     const targetIds = ['color1', 'color2', 'color3', 'color4'];
-    return config.colors.slice(0, config.colorCount).map((c, i) => Sequencer.getColorBlend(c, targetIds[i]));
+    return config.colors.slice(0, config.colorCount)
+        .map((c, i) => Sequencer.getColorBlend(c, targetIds[i]))
+        .map(applyMasterColor);
 }
 
 function addGradientStops(grad, colors, applyColor) {
@@ -1594,7 +1736,7 @@ function renderScene(dt) {
 
     const effectiveBackground = Sequencer.getColorBlend(BACKGROUND, 'background');
     const effectiveStarColor = Sequencer.getColorBlend(config.starColor, 'starColor');
-    const effectiveStrokeColor = Sequencer.getColorBlend(config.strokeColor, 'strokeColor');
+    const effectiveStrokeColor = applyMasterColor(Sequencer.getColorBlend(config.strokeColor, 'strokeColor'));
 
     if (config.starSpeedXAutoEnabled) {
         config.starSpeedXAutoTime += dt * config.starSpeedXSpeed;
@@ -1650,6 +1792,14 @@ function renderScene(dt) {
         objectsToRender.push({ model: secondModel, yOffset: -effectiveObjDistance / 2, scale: config.obj2Scale });
     } else {
         objectsToRender.push({ model: activeModel, yOffset: 0, scale: config.obj1Scale });
+    }
+
+    if (config.masterHueAutoEnabled) {
+        config.masterHueAutoTime += dt * config.masterHueSpeed;
+        const sineValue = Math.sin(config.masterHueAutoTime * Math.PI);
+        config.masterHue = config.masterHueMin + (config.masterHueMax - config.masterHueMin) * (sineValue + 1) / 2;
+        masterHueSlider.value = config.masterHue;
+        masterHueValue.textContent = config.masterHue.toFixed(0) + '°';
     }
 
     const effectiveColors = getEffectiveColors();

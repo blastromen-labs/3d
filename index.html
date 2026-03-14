@@ -408,6 +408,67 @@
         </div>
 
         <div class="control-group">
+            <label>
+                Master Hue Shift
+                <span class="value-display" id="masterHueValue">0°</span>
+            </label>
+            <input type="range" id="masterHueSlider" min="-180" max="180" step="1" value="0">
+        </div>
+
+        <div class="control-group">
+            <label>Hue Shift Automation</label>
+            <button id="masterHueAutoToggle" style="margin-top: 0;">Off</button>
+        </div>
+
+        <div class="control-group" id="masterHueMinGroup" style="display: none;">
+            <label>
+                Min Hue
+                <input type="number" class="inline-input" id="masterHueMinInput" min="-180" max="180" step="1" value="-180">
+            </label>
+            <input type="range" id="masterHueMinSlider" min="-180" max="180" step="1" value="-180">
+        </div>
+
+        <div class="control-group" id="masterHueMaxGroup" style="display: none;">
+            <label>
+                Max Hue
+                <input type="number" class="inline-input" id="masterHueMaxInput" min="-180" max="180" step="1" value="180">
+            </label>
+            <input type="range" id="masterHueMaxSlider" min="-180" max="180" step="1" value="180">
+        </div>
+
+        <div class="control-group" id="masterHueSpeedGroup" style="display: none;">
+            <label>
+                Hue Speed
+                <span class="value-display" id="masterHueSpeedValue">1.0x</span>
+            </label>
+            <input type="range" id="masterHueSpeedSlider" min="0.1" max="5" step="0.1" value="1">
+        </div>
+
+        <div class="control-group">
+            <label>
+                Master Saturation
+                <span class="value-display" id="masterSaturationValue">100%</span>
+            </label>
+            <input type="range" id="masterSaturationSlider" min="0" max="200" step="1" value="100">
+        </div>
+
+        <div class="control-group">
+            <label>
+                Master Brightness
+                <span class="value-display" id="masterBrightnessValue">100%</span>
+            </label>
+            <input type="range" id="masterBrightnessSlider" min="0" max="200" step="1" value="100">
+        </div>
+
+        <div class="control-group">
+            <label>
+                Master Contrast
+                <span class="value-display" id="masterContrastValue">100%</span>
+            </label>
+            <input type="range" id="masterContrastSlider" min="0" max="200" step="1" value="100">
+        </div>
+
+        <div class="control-group">
             <label>Background Color</label>
             <input type="color" id="backgroundPicker" value="#000000"
                 style="width: 100%; height: 24px; cursor: pointer; background: #2a2a2a; border: 1px solid #0fff83; border-radius: 3px;">
