@@ -142,32 +142,22 @@ function calculateCenter(vertices) {
 
 // Convert brightness (0-1) to color based on selected color
 function brightnessToColor(brightness, baseColor, contrast) {
-    // Apply contrast enhancement
-    // contrast: 0 = flat (no contrast), 100 = maximum contrast
+    // contrast: 0 = flat (exact selected color), 100 = full lighting range
 
-    // First normalize brightness to 0-1 range
     brightness = Math.max(0, Math.min(1.0, brightness));
 
-    // Apply power curve based on contrast to increase separation
-    // Higher contrast = stronger curve
-    const contrastPower = 1 + (contrast / 100) * 4; // Range: 1 to 5
+    const contrastFactor = contrast / 100;
+    const contrastPower = 1 + contrastFactor * 4;
     brightness = Math.pow(brightness, contrastPower);
 
-    // Apply contrast to min/max range
-    const contrastFactor = contrast / 100;
-    const minBrightness = Math.max(0, 0.3 - contrastFactor * 0.3); // 0.3 down to 0.0
-    const maxBrightness = 0.7 + contrastFactor * 0.3; // 0.7 up to 1.0
+    const minBrightness = 1.0 - contrastFactor;
+    brightness = minBrightness + brightness * contrastFactor;
 
-    // Map to final range
-    brightness = minBrightness + brightness * (maxBrightness - minBrightness);
-
-    // Parse hex color to RGB
     const hex = baseColor.replace('#', '');
     const r = parseInt(hex.substring(0, 2), 16);
     const g = parseInt(hex.substring(2, 4), 16);
     const b = parseInt(hex.substring(4, 6), 16);
 
-    // Apply brightness to each component
     const finalR = Math.floor(r * brightness);
     const finalG = Math.floor(g * brightness);
     const finalB = Math.floor(b * brightness);
@@ -672,12 +662,18 @@ const zoomAutoToggle = document.getElementById('zoomAutoToggle');
 const zoomMinSlider = document.getElementById('zoomMinSlider');
 const zoomMaxSlider = document.getElementById('zoomMaxSlider');
 const zoomSpeedSlider = document.getElementById('zoomSpeedSlider');
+const zoomMinGroup = document.getElementById('zoomMinGroup');
+const zoomMaxGroup = document.getElementById('zoomMaxGroup');
+const zoomSpeedGroup = document.getElementById('zoomSpeedGroup');
 const fovSlider = document.getElementById('fovSlider');
 const offsetYSlider = document.getElementById('offsetYSlider');
 const offsetYAutoToggle = document.getElementById('offsetYAutoToggle');
 const offsetYMinSlider = document.getElementById('offsetYMinSlider');
 const offsetYMaxSlider = document.getElementById('offsetYMaxSlider');
 const offsetYSpeedSlider = document.getElementById('offsetYSpeedSlider');
+const offsetYMinGroup = document.getElementById('offsetYMinGroup');
+const offsetYMaxGroup = document.getElementById('offsetYMaxGroup');
+const offsetYSpeedGroup = document.getElementById('offsetYSpeedGroup');
 const solidToggle = document.getElementById('solidToggle');
 const thicknessSlider = document.getElementById('thicknessSlider');
 const thicknessScaleToggle = document.getElementById('thicknessScaleToggle');
@@ -699,8 +695,10 @@ const colorGroups = [
 const gradientToggle = document.getElementById('gradientToggle');
 const gradientVibrancySlider = document.getElementById('gradientVibrancySlider');
 const gradientVibrancyValue = document.getElementById('gradientVibrancyValue');
+const gradientVibrancyGroup = document.getElementById('gradientVibrancyGroup');
 const strokeColorPicker = document.getElementById('strokeColorPicker');
 const contrastSlider = document.getElementById('contrastSlider');
+const contrastGroup = document.getElementById('contrastGroup');
 const masterHueSlider = document.getElementById('masterHueSlider');
 const masterHueValue = document.getElementById('masterHueValue');
 const masterHueAutoToggle = document.getElementById('masterHueAutoToggle');
@@ -866,10 +864,12 @@ angleZSlider.addEventListener('input', (e) => {
 zoomSlider.addEventListener('input', (e) => {
     config.zoom = parseFloat(e.target.value);
     zoomValue.textContent = config.zoom.toFixed(2);
-    // Disable auto zoom when manually adjusting
     if (config.zoomAutoEnabled) {
         config.zoomAutoEnabled = false;
         zoomAutoToggle.textContent = 'Off';
+        zoomMinGroup.style.display = 'none';
+        zoomMaxGroup.style.display = 'none';
+        zoomSpeedGroup.style.display = 'none';
     }
 });
 
@@ -877,6 +877,10 @@ zoomSlider.addEventListener('input', (e) => {
 zoomAutoToggle.addEventListener('click', () => {
     config.zoomAutoEnabled = !config.zoomAutoEnabled;
     zoomAutoToggle.textContent = config.zoomAutoEnabled ? 'On' : 'Off';
+    const show = config.zoomAutoEnabled ? '' : 'none';
+    zoomMinGroup.style.display = show;
+    zoomMaxGroup.style.display = show;
+    zoomSpeedGroup.style.display = show;
     if (config.zoomAutoEnabled) {
         config.zoomAutoTime = 0;
         config.zoomAutoDirection = 1;
@@ -928,6 +932,9 @@ offsetYSlider.addEventListener('input', (e) => {
     if (config.offsetYAutoEnabled) {
         config.offsetYAutoEnabled = false;
         offsetYAutoToggle.textContent = 'Off';
+        offsetYMinGroup.style.display = 'none';
+        offsetYMaxGroup.style.display = 'none';
+        offsetYSpeedGroup.style.display = 'none';
     }
 });
 
@@ -935,6 +942,10 @@ offsetYSlider.addEventListener('input', (e) => {
 offsetYAutoToggle.addEventListener('click', () => {
     config.offsetYAutoEnabled = !config.offsetYAutoEnabled;
     offsetYAutoToggle.textContent = config.offsetYAutoEnabled ? 'On' : 'Off';
+    const show = config.offsetYAutoEnabled ? '' : 'none';
+    offsetYMinGroup.style.display = show;
+    offsetYMaxGroup.style.display = show;
+    offsetYSpeedGroup.style.display = show;
     if (config.offsetYAutoEnabled) {
         config.offsetYAutoTime = 0;
     }
@@ -974,6 +985,7 @@ offsetYSpeedSlider.addEventListener('input', (e) => {
 solidToggle.addEventListener('click', () => {
     config.solidMode = !config.solidMode;
     solidToggle.textContent = config.solidMode ? 'Solid' : 'Wireframe';
+    contrastGroup.style.display = config.solidMode ? '' : 'none';
 });
 
 // Wireframe thickness control
@@ -1020,6 +1032,7 @@ document.querySelectorAll('.color-count-btn').forEach(btn => {
 gradientToggle.addEventListener('click', () => {
     config.gradientEnabled = !config.gradientEnabled;
     gradientToggle.textContent = config.gradientEnabled ? 'On' : 'Off';
+    gradientVibrancyGroup.style.display = config.gradientEnabled ? '' : 'none';
 });
 
 // Gradient vibrancy
@@ -1498,10 +1511,12 @@ tunnelSpeedValue.textContent = config.tunnelSpeed.toFixed(1) + 'x';
 game.addEventListener('wheel', (e) => {
     e.preventDefault(); // Prevent page scrolling
 
-    // Disable zoom automation when manually zooming
     if (config.zoomAutoEnabled) {
         config.zoomAutoEnabled = false;
         zoomAutoToggle.textContent = 'Off';
+        zoomMinGroup.style.display = 'none';
+        zoomMaxGroup.style.display = 'none';
+        zoomSpeedGroup.style.display = 'none';
     }
 
     // Adjust zoom based on wheel direction
@@ -1671,13 +1686,13 @@ modelEditorModal.addEventListener('click', (e) => {
 
 // Reset button
 resetBtn.addEventListener('click', () => {
-    config.speedX = 0.10;
-    config.speedY = 0.10;
+    config.speedX = 0;
+    config.speedY = 0;
     config.speedZ = 0;
     config.angleX = 0;
     config.angleY = 0;
     config.angleZ = 0;
-    config.zoom = 1.0;
+    config.zoom = 0.5;
     config.autoRotationX = 0;
     config.autoRotationY = 0;
     config.autoRotationZ = 0;
@@ -1725,7 +1740,7 @@ resetBtn.addEventListener('click', () => {
     config.zoomSpeed = 1.0;
     config.zoomAutoTime = 0;
     config.zoomAutoDirection = 1;
-    config.fov = 60;
+    config.fov = 30;
     config.offsetY = 0;
     config.offsetYAutoEnabled = false;
     config.offsetYMin = -0.5;
@@ -1771,20 +1786,26 @@ resetBtn.addEventListener('click', () => {
     objDistSpeedSlider.value = 1.0;
     objDistSpeedValue.textContent = '1.0x';
 
-    speedXSlider.value = 0.1;
-    speedYSlider.value = 0.1;
+    speedXSlider.value = 0;
+    speedYSlider.value = 0;
     speedZSlider.value = 0;
     angleXSlider.value = 0;
     angleYSlider.value = 0;
     angleZSlider.value = 0;
-    zoomSlider.value = 1.0;
+    zoomSlider.value = 0.5;
     zoomAutoToggle.textContent = 'Off';
+    zoomMinGroup.style.display = 'none';
+    zoomMaxGroup.style.display = 'none';
+    zoomSpeedGroup.style.display = 'none';
     zoomMinSlider.value = 0.8;
     zoomMaxSlider.value = 1.5;
     zoomSpeedSlider.value = 1.0;
-    fovSlider.value = 60;
+    fovSlider.value = 30;
     offsetYSlider.value = 0;
     offsetYAutoToggle.textContent = 'Off';
+    offsetYMinGroup.style.display = 'none';
+    offsetYMaxGroup.style.display = 'none';
+    offsetYSpeedGroup.style.display = 'none';
     offsetYMinSlider.value = -0.5;
     offsetYMaxSlider.value = 0.5;
     offsetYSpeedSlider.value = 1.0;
@@ -1799,6 +1820,7 @@ resetBtn.addEventListener('click', () => {
     colorPickers[3].value = '#ffff00';
     updateColorCount(1);
     gradientToggle.textContent = 'Off';
+    gradientVibrancyGroup.style.display = 'none';
     gradientVibrancySlider.value = 0;
     gradientVibrancyValue.textContent = '0%';
     masterHueSlider.value = 0;
@@ -1822,6 +1844,7 @@ resetBtn.addEventListener('click', () => {
     backgroundPicker.value = '#000000';
     BACKGROUND = '#000000';
     solidToggle.textContent = 'Wireframe';
+    contrastGroup.style.display = 'none';
     trailToggle.textContent = 'Off';
     trailAmountSlider.value = 50;
     trailAmountValue.textContent = '50%';
@@ -1870,17 +1893,17 @@ resetBtn.addEventListener('click', () => {
     synthStripesStartYValueEl.textContent = '50%';
     initSynthStripes();
 
-    speedXValue.textContent = '0.10x';
-    speedYValue.textContent = '0.10x';
+    speedXValue.textContent = '0.00x';
+    speedYValue.textContent = '0.00x';
     speedZValue.textContent = '0.00x';
     angleXValue.textContent = '0°';
     angleYValue.textContent = '0°';
     angleZValue.textContent = '0°';
-    zoomValue.textContent = '1.00';
+    zoomValue.textContent = '0.50';
     zoomMinInput.value = '0.80';
     zoomMaxInput.value = '1.50';
     zoomSpeedValue.textContent = '1.0x';
-    fovValue.textContent = '60°';
+    fovValue.textContent = '30°';
     offsetYValueEl.textContent = '0.00';
     offsetYMinInput.value = '-0.50';
     offsetYMaxInput.value = '0.50';
