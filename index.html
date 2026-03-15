@@ -971,6 +971,48 @@
 
         <div class="seq-track">
             <div class="seq-track-row">
+                <span class="seq-track-label" style="color:#66ffcc">OH</span>
+                <div class="seq-steps" id="seq-steps-openhat"></div>
+            </div>
+            <div class="seq-mod-row">
+                <label>Mod</label>
+                <select id="seq-mod-target-openhat"></select>
+                <label>Amt <span id="seq-mod-amount-val-openhat">0.50</span></label>
+                <input type="range" id="seq-mod-amount-openhat" min="-2" max="2" step="0.05" value="0.5">
+                <label>Return <span id="seq-mod-recovery-val-openhat">0.50</span></label>
+                <input type="range" id="seq-mod-recovery-openhat" min="0.05" max="1" step="0.05" value="0.5">
+                <span class="seq-mod-sep"></span>
+                <label>Color</label>
+                <button id="seq-color-toggle-openhat" class="seq-color-toggle">Off</button>
+                <select id="seq-color-target-openhat" class="seq-color-target"></select>
+                <input type="color" id="seq-color-picker-openhat" value="#33ffaa" class="seq-color-picker">
+                <label>Fade <span id="seq-color-return-val-openhat">0.30</span></label>
+                <input type="range" id="seq-color-return-openhat" min="0.02" max="1" step="0.02" value="0.3">
+                <span class="seq-mod-sep"></span>
+                <label>Solid</label>
+                <button id="seq-solid-toggle-openhat" class="seq-color-toggle">Off</button>
+                <label>Fade <span id="seq-solid-return-val-openhat">0.30</span></label>
+                <input type="range" id="seq-solid-return-openhat" min="0.02" max="1" step="0.02" value="0.3">
+                <span class="seq-mod-sep"></span>
+                <label>Distort</label>
+                <button id="seq-distort-toggle-openhat" class="seq-color-toggle">Off</button>
+                <label>Amt <span id="seq-distort-amount-val-openhat">0.15</span></label>
+                <input type="range" id="seq-distort-amount-openhat" min="0.02" max="1.5" step="0.01" value="0.15">
+                <label>Fade <span id="seq-distort-return-val-openhat">0.40</span></label>
+                <input type="range" id="seq-distort-return-openhat" min="0.02" max="1" step="0.02" value="0.4">
+                <span class="seq-mod-sep"></span>
+                <label>Morph</label>
+                <button id="seq-morph-toggle-openhat" class="seq-color-toggle">Off</button>
+                <select id="seq-morph-target-openhat" class="seq-morph-target"></select>
+                <label>Hold <span id="seq-morph-hold-val-openhat">0.15</span></label>
+                <input type="range" id="seq-morph-hold-openhat" min="0" max="1" step="0.05" value="0.15">
+                <label>Fade <span id="seq-morph-return-val-openhat">0.30</span></label>
+                <input type="range" id="seq-morph-return-openhat" min="0.02" max="1" step="0.02" value="0.3">
+            </div>
+        </div>
+
+        <div class="seq-track">
+            <div class="seq-track-row">
                 <span class="seq-track-label" style="color:#ffff33">SNARE</span>
                 <div class="seq-steps" id="seq-steps-snare"></div>
             </div>

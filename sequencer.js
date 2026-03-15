@@ -125,6 +125,34 @@ const Sequencer = (() => {
             morphHoldTimer: 0,
         },
         {
+            id: 'openhat',
+            label: 'OH',
+            steps: new Array(128).fill(false),
+            color: '#66ffcc',
+            modTarget: 'none',
+            modAmount: 0.5,
+            modRecovery: 0.5,
+            currentMod: 0,
+            colorModEnabled: false,
+            colorModTarget: 'color1',
+            colorModColor: '#33ffaa',
+            colorReturn: 0.3,
+            colorEnvelope: 0,
+            solidModEnabled: false,
+            solidReturn: 0.3,
+            solidEnvelope: 0,
+            distortModEnabled: false,
+            distortAmount: 0.15,
+            distortReturn: 0.4,
+            distortEnvelope: 0,
+            morphModEnabled: false,
+            morphModTarget: 'cube',
+            morphHold: 0.15,
+            morphReturn: 0.3,
+            morphEnvelope: 0,
+            morphHoldTimer: 0,
+        },
+        {
             id: 'snare',
             label: 'SNARE',
             steps: new Array(128).fill(false),
@@ -201,6 +229,27 @@ const Sequencer = (() => {
         source.stop(time + 0.08);
     }
 
+    function playOpenHihat(time) {
+        const source = audioCtx.createBufferSource();
+        source.buffer = noiseBuffer;
+        const hp = audioCtx.createBiquadFilter();
+        hp.type = 'highpass';
+        hp.frequency.value = 6000;
+        const bp = audioCtx.createBiquadFilter();
+        bp.type = 'bandpass';
+        bp.frequency.value = 10000;
+        bp.Q.value = 0.5;
+        const gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(0.35, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.3);
+        source.connect(hp);
+        hp.connect(bp);
+        bp.connect(gain);
+        gain.connect(masterGain);
+        source.start(time);
+        source.stop(time + 0.3);
+    }
+
     function playSnare(time) {
         const noise = audioCtx.createBufferSource();
         noise.buffer = noiseBuffer;
@@ -228,7 +277,7 @@ const Sequencer = (() => {
         osc.stop(time + 0.1);
     }
 
-    const drumFns = { kick: playKick, hihat: playHihat, snare: playSnare };
+    const drumFns = { kick: playKick, hihat: playHihat, openhat: playOpenHihat, snare: playSnare };
 
     // --- Scheduler ---
 
