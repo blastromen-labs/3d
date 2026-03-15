@@ -15,6 +15,7 @@ const Sequencer = (() => {
 
     let isPainting = false;
     let paintValue = false;
+    let clipboard = null;
 
     // Sample player state
     let sampleBuffer = null;
@@ -78,7 +79,7 @@ const Sequencer = (() => {
         {
             id: 'kick',
             label: 'KICK',
-            steps: new Array(64).fill(false),
+            steps: new Array(128).fill(false),
             color: '#ff6633',
             modTarget: 'zoom',
             modAmount: -0.3,
@@ -106,7 +107,7 @@ const Sequencer = (() => {
         {
             id: 'hihat',
             label: 'HIHAT',
-            steps: new Array(64).fill(false),
+            steps: new Array(128).fill(false),
             color: '#33ffff',
             modTarget: 'none',
             modAmount: 0.5,
@@ -134,7 +135,7 @@ const Sequencer = (() => {
         {
             id: 'snare',
             label: 'SNARE',
-            steps: new Array(64).fill(false),
+            steps: new Array(128).fill(false),
             color: '#ffff33',
             modTarget: 'none',
             modAmount: 0.5,
@@ -489,6 +490,10 @@ const Sequencer = (() => {
             const stepIdx = parseInt(el.dataset.step);
             el.classList.toggle('seq-step-current', stepIdx === displayStep);
         });
+        const playingPage = displayStep >= 0 ? Math.floor(displayStep / STEPS_PER_PAGE) : -1;
+        document.querySelectorAll('.seq-page-btn').forEach(btn => {
+            btn.classList.toggle('seq-page-playing', parseInt(btn.dataset.page) === playingPage);
+        });
     }
 
     function setTotalSteps(count) {
@@ -533,7 +538,7 @@ const Sequencer = (() => {
 
             for (let i = 0; i < STEPS_PER_PAGE; i++) {
                 const stepIdx = pageStart + i;
-                if (stepIdx >= 64) break;
+                if (stepIdx >= 128) break;
 
                 const btn = document.createElement('button');
                 btn.className = 'seq-step';
@@ -620,6 +625,47 @@ const Sequencer = (() => {
 
         document.querySelectorAll('.seq-page-btn').forEach(btn => {
             btn.addEventListener('click', () => setPage(parseInt(btn.dataset.page)));
+        });
+
+        const copyBtn = document.getElementById('seqCopyBtn');
+        const pasteBtn = document.getElementById('seqPasteBtn');
+
+        copyBtn.addEventListener('click', () => {
+            const pageStart = currentPage * STEPS_PER_PAGE;
+            clipboard = tracks.map(t => t.steps.slice(pageStart, pageStart + STEPS_PER_PAGE));
+            pasteBtn.disabled = false;
+        });
+
+        pasteBtn.addEventListener('click', () => {
+            if (!clipboard) return;
+            const pageStart = currentPage * STEPS_PER_PAGE;
+            tracks.forEach((t, i) => {
+                for (let j = 0; j < STEPS_PER_PAGE; j++) {
+                    if (pageStart + j < t.steps.length) {
+                        t.steps[pageStart + j] = clipboard[i][j];
+                    }
+                }
+            });
+            renderGrid();
+        });
+
+        const dupeBtn = document.getElementById('seqDupeBtn');
+        dupeBtn.addEventListener('click', () => {
+            const pageStart = currentPage * STEPS_PER_PAGE;
+            const srcPattern = tracks.map(t => t.steps.slice(pageStart, pageStart + STEPS_PER_PAGE));
+            const numPages = totalSteps / STEPS_PER_PAGE;
+            for (let p = 0; p < numPages; p++) {
+                if (p === currentPage) continue;
+                const destStart = p * STEPS_PER_PAGE;
+                tracks.forEach((t, i) => {
+                    for (let j = 0; j < STEPS_PER_PAGE; j++) {
+                        if (destStart + j < t.steps.length) {
+                            t.steps[destStart + j] = srcPattern[i][j];
+                        }
+                    }
+                });
+            }
+            renderGrid();
         });
 
         for (const track of tracks) {

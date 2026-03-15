@@ -50,7 +50,15 @@
     <canvas id="game"></canvas>
 
     <div class="controls">
-        <h2>3D Controls</h2>
+        <h2 class="panel-header">3D Controls <button id="resetBtn" class="reset-btn">Reset All</button></h2>
+
+        <div class="control-group">
+            <label>
+                FOV
+                <span class="value-display" id="fovValue">30°</span>
+            </label>
+            <input type="range" id="fovSlider" min="20" max="120" step="1" value="30">
+        </div>
 
         <div class="control-group">
             <label>
@@ -113,7 +121,7 @@
             <button id="zoomAutoToggle" style="margin-top: 0;">Off</button>
         </div>
 
-        <div class="control-group">
+        <div class="control-group" id="zoomMinGroup" style="display: none;">
             <label>
                 Min Zoom
                 <input type="number" class="inline-input" id="zoomMinInput" min="0.1" max="10" step="0.01" value="0.8">
@@ -121,7 +129,7 @@
             <input type="range" id="zoomMinSlider" min="0.1" max="10" step="0.01" value="0.8">
         </div>
 
-        <div class="control-group">
+        <div class="control-group" id="zoomMaxGroup" style="display: none;">
             <label>
                 Max Zoom
                 <input type="number" class="inline-input" id="zoomMaxInput" min="0.1" max="10" step="0.01" value="1.5">
@@ -129,20 +137,12 @@
             <input type="range" id="zoomMaxSlider" min="0.1" max="10" step="0.01" value="1.5">
         </div>
 
-        <div class="control-group">
+        <div class="control-group" id="zoomSpeedGroup" style="display: none;">
             <label>
                 Zoom Speed
                 <span class="value-display" id="zoomSpeedValue">1.0x</span>
             </label>
             <input type="range" id="zoomSpeedSlider" min="0.1" max="5" step="0.1" value="1">
-        </div>
-
-        <div class="control-group">
-            <label>
-                FOV
-                <span class="value-display" id="fovValue">30°</span>
-            </label>
-            <input type="range" id="fovSlider" min="20" max="120" step="1" value="30">
         </div>
 
         <div class="control-group">
@@ -158,7 +158,7 @@
             <button id="offsetYAutoToggle" style="margin-top: 0;">Off</button>
         </div>
 
-        <div class="control-group">
+        <div class="control-group" id="offsetYMinGroup" style="display: none;">
             <label>
                 Min Y
                 <input type="number" class="inline-input" id="offsetYMinInput" min="-2" max="2" step="0.05" value="-0.5">
@@ -166,7 +166,7 @@
             <input type="range" id="offsetYMinSlider" min="-2" max="2" step="0.05" value="-0.5">
         </div>
 
-        <div class="control-group">
+        <div class="control-group" id="offsetYMaxGroup" style="display: none;">
             <label>
                 Max Y
                 <input type="number" class="inline-input" id="offsetYMaxInput" min="-2" max="2" step="0.05" value="0.5">
@@ -174,7 +174,7 @@
             <input type="range" id="offsetYMaxSlider" min="-2" max="2" step="0.05" value="0.5">
         </div>
 
-        <div class="control-group">
+        <div class="control-group" id="offsetYSpeedGroup" style="display: none;">
             <label>
                 Y Speed
                 <span class="value-display" id="offsetYSpeedValue">1.0x</span>
@@ -182,469 +182,481 @@
             <input type="range" id="offsetYSpeedSlider" min="0.1" max="5" step="0.1" value="1">
         </div>
 
-        <div class="control-group">
-            <label>Render Mode</label>
-            <button id="solidToggle" style="margin-top: 0;">Wireframe</button>
-        </div>
-
-        <button id="resetBtn">Reset All</button>
     </div>
 
-    <div class="model-controls">
-        <h2>Model Editor</h2>
+    <div class="right-panel">
+        <div class="tab-bar">
+            <button class="tab-btn active" data-tab="tab-model">Model</button>
+            <button class="tab-btn" data-tab="tab-general">General</button>
+            <button class="tab-btn" data-tab="tab-master">Master</button>
+            <button class="tab-btn" data-tab="tab-stars">Stars</button>
+            <button class="tab-btn" data-tab="tab-stripes">Stripes</button>
+        </div>
 
-        <div class="control-group">
-            <label>Object Count</label>
-            <div class="color-count-btns">
-                <button class="obj-count-btn active" data-count="1">1</button>
-                <button class="obj-count-btn" data-count="2">2</button>
+        <div class="tab-content active" id="tab-model">
+            <div class="control-group">
+                <label>Object Count</label>
+                <div class="color-count-btns">
+                    <button class="obj-count-btn active" data-count="1">1</button>
+                    <button class="obj-count-btn" data-count="2">2</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Object 1 Preset</label>
+                <select id="modelPreset">
+                    <option value="penguin">Penguin</option>
+                    <option value="cube">Cube</option>
+                    <option value="hollowCube">Hollow Cube</option>
+                    <option value="pyramid">Pyramid</option>
+                    <option value="octahedron">Octahedron</option>
+                    <option value="dodecahedron">Dodecahedron</option>
+                    <option value="icosahedron">Icosahedron</option>
+                    <option value="torus">Torus</option>
+                    <option value="octagonTube">Octagon Tube</option>
+                    <option value="hand">Hand</option>
+                    <option value="custom">Custom</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>
+                    Object 1 Scale
+                    <span class="value-display" id="obj1ScaleValue">1.00x</span>
+                </label>
+                <input type="range" id="obj1ScaleSlider" min="0.1" max="3" step="0.01" value="1">
+            </div>
+
+            <div class="control-group" id="obj2PresetGroup" style="display: none;">
+                <label>Object 2 Preset</label>
+                <select id="modelPreset2">
+                    <option value="penguin">Penguin</option>
+                    <option value="cube">Cube</option>
+                    <option value="hollowCube">Hollow Cube</option>
+                    <option value="pyramid">Pyramid</option>
+                    <option value="octahedron">Octahedron</option>
+                    <option value="dodecahedron">Dodecahedron</option>
+                    <option value="icosahedron">Icosahedron</option>
+                    <option value="torus" selected>Torus</option>
+                    <option value="octagonTube">Octagon Tube</option>
+                    <option value="hand">Hand</option>
+                    <option value="custom">Custom</option>
+                </select>
+            </div>
+
+            <div class="control-group" id="obj2ScaleGroup" style="display: none;">
+                <label>
+                    Object 2 Scale
+                    <span class="value-display" id="obj2ScaleValue">1.00x</span>
+                </label>
+                <input type="range" id="obj2ScaleSlider" min="0.1" max="3" step="0.01" value="1">
+            </div>
+
+            <div class="control-group" id="objDistanceGroup" style="display: none;">
+                <label>
+                    Y Distance
+                    <span class="value-display" id="objDistanceValue">0.50</span>
+                </label>
+                <input type="range" id="objDistanceSlider" min="0" max="2" step="0.01" value="0.5">
+            </div>
+
+            <div class="control-group" id="objDistAutoGroup" style="display: none;">
+                <label>Distance Automation</label>
+                <button id="objDistAutoToggle" style="margin-top: 0;">Off</button>
+            </div>
+
+            <div class="control-group" id="objDistMinGroup" style="display: none;">
+                <label>
+                    Min Distance
+                    <input type="number" class="inline-input" id="objDistMinInput" min="0" max="5" step="0.01" value="0.10">
+                </label>
+                <input type="range" id="objDistMinSlider" min="0" max="5" step="0.01" value="0.1">
+            </div>
+
+            <div class="control-group" id="objDistMaxGroup" style="display: none;">
+                <label>
+                    Max Distance
+                    <input type="number" class="inline-input" id="objDistMaxInput" min="0" max="5" step="0.01" value="1.00">
+                </label>
+                <input type="range" id="objDistMaxSlider" min="0" max="5" step="0.01" value="1">
+            </div>
+
+            <div class="control-group" id="objDistSpeedGroup" style="display: none;">
+                <label>
+                    Distance Speed
+                    <span class="value-display" id="objDistSpeedValue">1.0x</span>
+                </label>
+                <input type="range" id="objDistSpeedSlider" min="0.1" max="5" step="0.1" value="1">
+            </div>
+
+            <div class="control-group">
+                <label>Morph To</label>
+                <button id="morphToggle" style="margin-top: 0;">Off</button>
+                <select id="morphTarget">
+                    <option value="penguin">Penguin</option>
+                    <option value="cube">Cube</option>
+                    <option value="hollowCube">Hollow Cube</option>
+                    <option value="pyramid" selected>Pyramid</option>
+                    <option value="octahedron">Octahedron</option>
+                    <option value="dodecahedron">Dodecahedron</option>
+                    <option value="icosahedron">Icosahedron</option>
+                    <option value="torus">Torus</option>
+                    <option value="octagonTube">Octagon Tube</option>
+                    <option value="hand">Hand</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>
+                    Morph Speed
+                    <span class="value-display" id="morphSpeedValue">0.5x</span>
+                </label>
+                <input type="range" id="morphSpeedSlider" min="0.1" max="5" step="0.1" value="0.5">
+            </div>
+
+            <div class="control-group">
+                <label>Edit Model</label>
+                <button id="editModelBtn" style="margin-top: 0;">Edit Current Model</button>
+                <button id="savePresetBtn" style="margin-top: 5px;">Save as Preset</button>
             </div>
         </div>
 
-        <div class="control-group">
-            <label>Object 1 Preset</label>
-            <select id="modelPreset">
-                <option value="penguin">Penguin</option>
-                <option value="cube">Cube</option>
-                <option value="hollowCube">Hollow Cube</option>
-                <option value="pyramid">Pyramid</option>
-                <option value="octahedron">Octahedron</option>
-                <option value="dodecahedron">Dodecahedron</option>
-                <option value="icosahedron">Icosahedron</option>
-                <option value="torus">Torus</option>
-                <option value="octagonTube">Octagon Tube</option>
-                <option value="hand">Hand</option>
-                <option value="custom">Custom</option>
-            </select>
-        </div>
+        <div class="tab-content" id="tab-general">
+            <div class="control-group">
+                <label>Render Mode</label>
+                <button id="solidToggle" style="margin-top: 0;">Wireframe</button>
+            </div>
 
-        <div class="control-group">
-            <label>
-                Object 1 Scale
-                <span class="value-display" id="obj1ScaleValue">1.00x</span>
-            </label>
-            <input type="range" id="obj1ScaleSlider" min="0.1" max="3" step="0.01" value="1">
-        </div>
+            <div class="control-group" id="contrastGroup" style="display: none;">
+                <label>
+                    Lighting Contrast
+                    <span class="value-display" id="contrastValue">70%</span>
+                </label>
+                <input type="range" id="contrastSlider" min="0" max="100" step="1" value="70">
+            </div>
 
-        <div class="control-group" id="obj2PresetGroup" style="display: none;">
-            <label>Object 2 Preset</label>
-            <select id="modelPreset2">
-                <option value="penguin">Penguin</option>
-                <option value="cube">Cube</option>
-                <option value="hollowCube">Hollow Cube</option>
-                <option value="pyramid">Pyramid</option>
-                <option value="octahedron">Octahedron</option>
-                <option value="dodecahedron">Dodecahedron</option>
-                <option value="icosahedron">Icosahedron</option>
-                <option value="torus" selected>Torus</option>
-                <option value="octagonTube">Octagon Tube</option>
-                <option value="hand">Hand</option>
-                <option value="custom">Custom</option>
-            </select>
-        </div>
+            <div class="control-group">
+                <label>
+                    Line Thickness
+                    <span class="value-display" id="thicknessValue">10.0px</span>
+                </label>
+                <input type="range" id="thicknessSlider" min="1" max="30" step="0.5" value="10">
+            </div>
 
-        <div class="control-group" id="obj2ScaleGroup" style="display: none;">
-            <label>
-                Object 2 Scale
-                <span class="value-display" id="obj2ScaleValue">1.00x</span>
-            </label>
-            <input type="range" id="obj2ScaleSlider" min="0.1" max="3" step="0.01" value="1">
-        </div>
+            <div class="control-group">
+                <label>
+                    Scale Thickness with Zoom
+                    <button id="thicknessScaleToggle" class="toggle-btn">Off</button>
+                </label>
+            </div>
 
-        <div class="control-group" id="objDistanceGroup" style="display: none;">
-            <label>
-                Y Distance
-                <span class="value-display" id="objDistanceValue">0.50</span>
-            </label>
-            <input type="range" id="objDistanceSlider" min="0" max="2" step="0.01" value="0.5">
-        </div>
+            <div class="control-group" id="thicknessScaleGroup" style="display: none;">
+                <label>
+                    Scale Amount
+                    <span class="value-display" id="thicknessScaleValue">50%</span>
+                </label>
+                <input type="range" id="thicknessScaleSlider" min="0" max="200" step="5" value="50">
+            </div>
 
-        <div class="control-group" id="objDistAutoGroup" style="display: none;">
-            <label>Distance Automation</label>
-            <button id="objDistAutoToggle" style="margin-top: 0;">Off</button>
-        </div>
+            <div class="control-group">
+                <label>Color Count</label>
+                <div class="color-count-btns">
+                    <button class="color-count-btn active" data-count="1">1</button>
+                    <button class="color-count-btn" data-count="2">2</button>
+                    <button class="color-count-btn" data-count="3">3</button>
+                    <button class="color-count-btn" data-count="4">4</button>
+                </div>
+            </div>
 
-        <div class="control-group" id="objDistMinGroup" style="display: none;">
-            <label>
-                Min Distance
-                <input type="number" class="inline-input" id="objDistMinInput" min="0" max="5" step="0.01" value="0.10">
-            </label>
-            <input type="range" id="objDistMinSlider" min="0" max="5" step="0.01" value="0.1">
-        </div>
+            <div class="control-group" id="color1Group">
+                <label>Color 1</label>
+                <input type="color" id="colorPicker1" value="#ff0000"
+                    style="width: 100%; height: 24px; cursor: pointer; background: #2a2a2a; border: 1px solid #0fff83; border-radius: 3px;">
+            </div>
 
-        <div class="control-group" id="objDistMaxGroup" style="display: none;">
-            <label>
-                Max Distance
-                <input type="number" class="inline-input" id="objDistMaxInput" min="0" max="5" step="0.01" value="1.00">
-            </label>
-            <input type="range" id="objDistMaxSlider" min="0" max="5" step="0.01" value="1">
-        </div>
+            <div class="control-group" id="color2Group" style="display:none">
+                <label>Color 2</label>
+                <input type="color" id="colorPicker2" value="#00ff00"
+                    style="width: 100%; height: 24px; cursor: pointer; background: #2a2a2a; border: 1px solid #0fff83; border-radius: 3px;">
+            </div>
 
-        <div class="control-group" id="objDistSpeedGroup" style="display: none;">
-            <label>
-                Distance Speed
-                <span class="value-display" id="objDistSpeedValue">1.0x</span>
-            </label>
-            <input type="range" id="objDistSpeedSlider" min="0.1" max="5" step="0.1" value="1">
-        </div>
+            <div class="control-group" id="color3Group" style="display:none">
+                <label>Color 3</label>
+                <input type="color" id="colorPicker3" value="#0000ff"
+                    style="width: 100%; height: 24px; cursor: pointer; background: #2a2a2a; border: 1px solid #0fff83; border-radius: 3px;">
+            </div>
 
-        <div class="control-group">
-            <label>Morph To</label>
-            <button id="morphToggle" style="margin-top: 0;">Off</button>
-            <select id="morphTarget">
-                <option value="penguin">Penguin</option>
-                <option value="cube">Cube</option>
-                <option value="hollowCube">Hollow Cube</option>
-                <option value="pyramid" selected>Pyramid</option>
-                <option value="octahedron">Octahedron</option>
-                <option value="dodecahedron">Dodecahedron</option>
-                <option value="icosahedron">Icosahedron</option>
-                <option value="torus">Torus</option>
-                <option value="octagonTube">Octagon Tube</option>
-                <option value="hand">Hand</option>
-            </select>
-        </div>
+            <div class="control-group" id="color4Group" style="display:none">
+                <label>Color 4</label>
+                <input type="color" id="colorPicker4" value="#ffff00"
+                    style="width: 100%; height: 24px; cursor: pointer; background: #2a2a2a; border: 1px solid #0fff83; border-radius: 3px;">
+            </div>
 
-        <div class="control-group">
-            <label>
-                Morph Speed
-                <span class="value-display" id="morphSpeedValue">0.5x</span>
-            </label>
-            <input type="range" id="morphSpeedSlider" min="0.1" max="5" step="0.1" value="0.5">
-        </div>
+            <div class="control-group">
+                <label>Color Gradient</label>
+                <button id="gradientToggle" style="margin-top: 0;">Off</button>
+            </div>
 
-        <div class="control-group">
-            <label>Edit Model</label>
-            <button id="editModelBtn" style="margin-top: 0;">Edit Current Model</button>
-            <button id="savePresetBtn" style="margin-top: 5px;">Save as Preset</button>
-        </div>
-    </div>
+            <div class="control-group" id="gradientVibrancyGroup" style="display: none;">
+                <label>
+                    Gradient Vibrancy
+                    <span class="value-display" id="gradientVibrancyValue">0%</span>
+                </label>
+                <input type="range" id="gradientVibrancySlider" min="0" max="100" step="1" value="0">
+            </div>
 
-    <div class="appearance-controls">
-        <h2>Appearance</h2>
+            <div class="control-group">
+                <label>Stroke Color (Solid Mode)</label>
+                <input type="color" id="strokeColorPicker" value="#000000"
+                    style="width: 100%; height: 24px; cursor: pointer; background: #2a2a2a; border: 1px solid #0fff83; border-radius: 3px;">
+            </div>
 
-        <div class="control-group">
-            <label>
-                Line Thickness
-                <span class="value-display" id="thicknessValue">10.0px</span>
-            </label>
-            <input type="range" id="thicknessSlider" min="1" max="30" step="0.5" value="10">
-        </div>
+            <div class="control-group">
+                <label>Motion Trail</label>
+                <button id="trailToggle" style="margin-top: 0;">Off</button>
+            </div>
 
-        <div class="control-group">
-            <label>
-                Scale Thickness with Zoom
-                <button id="thicknessScaleToggle" class="toggle-btn">Off</button>
-            </label>
-        </div>
-
-        <div class="control-group" id="thicknessScaleGroup" style="display: none;">
-            <label>
-                Scale Amount
-                <span class="value-display" id="thicknessScaleValue">50%</span>
-            </label>
-            <input type="range" id="thicknessScaleSlider" min="0" max="200" step="5" value="50">
-        </div>
-
-        <div class="control-group">
-            <label>Color Count</label>
-            <div class="color-count-btns">
-                <button class="color-count-btn active" data-count="1">1</button>
-                <button class="color-count-btn" data-count="2">2</button>
-                <button class="color-count-btn" data-count="3">3</button>
-                <button class="color-count-btn" data-count="4">4</button>
+            <div class="control-group" id="trailAmountGroup" style="display: none;">
+                <label>
+                    Trail Amount
+                    <span class="value-display" id="trailAmountValue">50%</span>
+                </label>
+                <input type="range" id="trailAmountSlider" min="1" max="99" step="1" value="50">
             </div>
         </div>
 
-        <div class="control-group" id="color1Group">
-            <label>Color 1</label>
-            <input type="color" id="colorPicker1" value="#ff0000"
-                style="width: 100%; height: 24px; cursor: pointer; background: #2a2a2a; border: 1px solid #0fff83; border-radius: 3px;">
+        <div class="tab-content" id="tab-master">
+            <div class="control-group">
+                <label>
+                    Master Hue Shift
+                    <span class="value-display" id="masterHueValue">0°</span>
+                </label>
+                <input type="range" id="masterHueSlider" min="-180" max="180" step="1" value="0">
+            </div>
+
+            <div class="control-group">
+                <label>Hue Shift Automation</label>
+                <button id="masterHueAutoToggle" style="margin-top: 0;">Off</button>
+            </div>
+
+            <div class="control-group" id="masterHueMinGroup" style="display: none;">
+                <label>
+                    Min Hue
+                    <input type="number" class="inline-input" id="masterHueMinInput" min="-180" max="180" step="1" value="-180">
+                </label>
+                <input type="range" id="masterHueMinSlider" min="-180" max="180" step="1" value="-180">
+            </div>
+
+            <div class="control-group" id="masterHueMaxGroup" style="display: none;">
+                <label>
+                    Max Hue
+                    <input type="number" class="inline-input" id="masterHueMaxInput" min="-180" max="180" step="1" value="180">
+                </label>
+                <input type="range" id="masterHueMaxSlider" min="-180" max="180" step="1" value="180">
+            </div>
+
+            <div class="control-group" id="masterHueSpeedGroup" style="display: none;">
+                <label>
+                    Hue Speed
+                    <span class="value-display" id="masterHueSpeedValue">1.0x</span>
+                </label>
+                <input type="range" id="masterHueSpeedSlider" min="0.1" max="5" step="0.1" value="1">
+            </div>
+
+            <div class="control-group">
+                <label>
+                    Master Saturation
+                    <span class="value-display" id="masterSaturationValue">100%</span>
+                </label>
+                <input type="range" id="masterSaturationSlider" min="0" max="200" step="1" value="100">
+            </div>
+
+            <div class="control-group">
+                <label>
+                    Master Brightness
+                    <span class="value-display" id="masterBrightnessValue">100%</span>
+                </label>
+                <input type="range" id="masterBrightnessSlider" min="0" max="200" step="1" value="100">
+            </div>
+
+            <div class="control-group">
+                <label>
+                    Master Contrast
+                    <span class="value-display" id="masterContrastValue">100%</span>
+                </label>
+                <input type="range" id="masterContrastSlider" min="0" max="200" step="1" value="100">
+            </div>
+
+            <div class="control-group">
+                <label>Background Color</label>
+                <input type="color" id="backgroundPicker" value="#000000"
+                    style="width: 100%; height: 24px; cursor: pointer; background: #2a2a2a; border: 1px solid #0fff83; border-radius: 3px;">
+            </div>
+
         </div>
 
-        <div class="control-group" id="color2Group" style="display:none">
-            <label>Color 2</label>
-            <input type="color" id="colorPicker2" value="#00ff00"
-                style="width: 100%; height: 24px; cursor: pointer; background: #2a2a2a; border: 1px solid #0fff83; border-radius: 3px;">
-        </div>
+        <div class="tab-content" id="tab-stars">
+            <div class="control-group">
+                <label>Stars</label>
+                <button id="starsToggle" style="margin-top: 0;">Off</button>
+            </div>
 
-        <div class="control-group" id="color3Group" style="display:none">
-            <label>Color 3</label>
-            <input type="color" id="colorPicker3" value="#0000ff"
-                style="width: 100%; height: 24px; cursor: pointer; background: #2a2a2a; border: 1px solid #0fff83; border-radius: 3px;">
-        </div>
+            <div class="control-group">
+                <label>Star Mode</label>
+                <button id="starModeToggle" style="margin-top: 0;">Parallax</button>
+            </div>
 
-        <div class="control-group" id="color4Group" style="display:none">
-            <label>Color 4</label>
-            <input type="color" id="colorPicker4" value="#ffff00"
-                style="width: 100%; height: 24px; cursor: pointer; background: #2a2a2a; border: 1px solid #0fff83; border-radius: 3px;">
-        </div>
+            <div class="control-group" id="tunnelSpeedGroup" style="display: none;">
+                <label>
+                    Tunnel Speed
+                    <span class="value-display" id="tunnelSpeedValue">2.0x</span>
+                </label>
+                <input type="range" id="tunnelSpeedSlider" min="-10" max="10" step="0.1" value="2">
+            </div>
 
-        <div class="control-group">
-            <label>Color Gradient</label>
-            <button id="gradientToggle" style="margin-top: 0;">Off</button>
-        </div>
+            <div class="control-group">
+                <label>
+                    Star Direction & Speed
+                    <span class="value-display" id="starSpeedDisplay">0.0, 0.0</span>
+                </label>
+                <div class="joystick-pad" id="starJoystick">
+                    <div class="joystick-axis joystick-axis-x"></div>
+                    <div class="joystick-axis joystick-axis-y"></div>
+                    <div class="joystick-dot" id="starJoystickDot"></div>
+                </div>
+            </div>
 
-        <div class="control-group">
-            <label>
-                Gradient Vibrancy
-                <span class="value-display" id="gradientVibrancyValue">0%</span>
-            </label>
-            <input type="range" id="gradientVibrancySlider" min="0" max="100" step="1" value="0">
-        </div>
+            <div class="control-group">
+                <label>Star X Speed Automation</label>
+                <button id="starSpeedXAutoToggle" style="margin-top: 0;">Off</button>
+            </div>
 
-        <div class="control-group">
-            <label>Stroke Color (Solid Mode)</label>
-            <input type="color" id="strokeColorPicker" value="#000000"
-                style="width: 100%; height: 24px; cursor: pointer; background: #2a2a2a; border: 1px solid #0fff83; border-radius: 3px;">
-        </div>
+            <div class="control-group" id="starSpeedXMinGroup" style="display: none;">
+                <label>
+                    X Min
+                    <input type="number" class="inline-input" id="starSpeedXMinInput" min="-5" max="5" step="0.1" value="-3.0">
+                </label>
+                <input type="range" id="starSpeedXMinSlider" min="-5" max="5" step="0.1" value="-3">
+            </div>
 
-        <div class="control-group">
-            <label>
-                Lighting Contrast
-                <span class="value-display" id="contrastValue">70%</span>
-            </label>
-            <input type="range" id="contrastSlider" min="0" max="100" step="1" value="70">
-        </div>
+            <div class="control-group" id="starSpeedXMaxGroup" style="display: none;">
+                <label>
+                    X Max
+                    <input type="number" class="inline-input" id="starSpeedXMaxInput" min="-5" max="5" step="0.1" value="3.0">
+                </label>
+                <input type="range" id="starSpeedXMaxSlider" min="-5" max="5" step="0.1" value="3">
+            </div>
 
-        <div class="control-group">
-            <label>
-                Master Hue Shift
-                <span class="value-display" id="masterHueValue">0°</span>
-            </label>
-            <input type="range" id="masterHueSlider" min="-180" max="180" step="1" value="0">
-        </div>
+            <div class="control-group" id="starSpeedXSpeedGroup" style="display: none;">
+                <label>
+                    X Speed
+                    <span class="value-display" id="starSpeedXSpeedValue">1.0x</span>
+                </label>
+                <input type="range" id="starSpeedXSpeedSlider" min="0.1" max="5" step="0.1" value="1">
+            </div>
 
-        <div class="control-group">
-            <label>Hue Shift Automation</label>
-            <button id="masterHueAutoToggle" style="margin-top: 0;">Off</button>
-        </div>
+            <div class="control-group">
+                <label>Star Y Speed Automation</label>
+                <button id="starSpeedYAutoToggle" style="margin-top: 0;">Off</button>
+            </div>
 
-        <div class="control-group" id="masterHueMinGroup" style="display: none;">
-            <label>
-                Min Hue
-                <input type="number" class="inline-input" id="masterHueMinInput" min="-180" max="180" step="1" value="-180">
-            </label>
-            <input type="range" id="masterHueMinSlider" min="-180" max="180" step="1" value="-180">
-        </div>
+            <div class="control-group" id="starSpeedYMinGroup" style="display: none;">
+                <label>
+                    Y Min
+                    <input type="number" class="inline-input" id="starSpeedYMinInput" min="-5" max="5" step="0.1" value="-3.0">
+                </label>
+                <input type="range" id="starSpeedYMinSlider" min="-5" max="5" step="0.1" value="-3">
+            </div>
 
-        <div class="control-group" id="masterHueMaxGroup" style="display: none;">
-            <label>
-                Max Hue
-                <input type="number" class="inline-input" id="masterHueMaxInput" min="-180" max="180" step="1" value="180">
-            </label>
-            <input type="range" id="masterHueMaxSlider" min="-180" max="180" step="1" value="180">
-        </div>
+            <div class="control-group" id="starSpeedYMaxGroup" style="display: none;">
+                <label>
+                    Y Max
+                    <input type="number" class="inline-input" id="starSpeedYMaxInput" min="-5" max="5" step="0.1" value="3.0">
+                </label>
+                <input type="range" id="starSpeedYMaxSlider" min="-5" max="5" step="0.1" value="3">
+            </div>
 
-        <div class="control-group" id="masterHueSpeedGroup" style="display: none;">
-            <label>
-                Hue Speed
-                <span class="value-display" id="masterHueSpeedValue">1.0x</span>
-            </label>
-            <input type="range" id="masterHueSpeedSlider" min="0.1" max="5" step="0.1" value="1">
-        </div>
+            <div class="control-group" id="starSpeedYSpeedGroup" style="display: none;">
+                <label>
+                    Y Speed
+                    <span class="value-display" id="starSpeedYSpeedValue">1.0x</span>
+                </label>
+                <input type="range" id="starSpeedYSpeedSlider" min="0.1" max="5" step="0.1" value="1">
+            </div>
 
-        <div class="control-group">
-            <label>
-                Master Saturation
-                <span class="value-display" id="masterSaturationValue">100%</span>
-            </label>
-            <input type="range" id="masterSaturationSlider" min="0" max="200" step="1" value="100">
-        </div>
+            <div class="control-group">
+                <label>Star Color</label>
+                <input type="color" id="starColorPicker" value="#ffffff">
+            </div>
 
-        <div class="control-group">
-            <label>
-                Master Brightness
-                <span class="value-display" id="masterBrightnessValue">100%</span>
-            </label>
-            <input type="range" id="masterBrightnessSlider" min="0" max="200" step="1" value="100">
-        </div>
+            <div class="control-group">
+                <label>
+                    Star Depth Contrast
+                    <span class="value-display" id="starContrastValue">100%</span>
+                </label>
+                <input type="range" id="starContrastSlider" min="0" max="100" step="1" value="100">
+            </div>
 
-        <div class="control-group">
-            <label>
-                Master Contrast
-                <span class="value-display" id="masterContrastValue">100%</span>
-            </label>
-            <input type="range" id="masterContrastSlider" min="0" max="200" step="1" value="100">
-        </div>
+            <div class="control-group">
+                <label>
+                    Star Size
+                    <span class="value-display" id="starSizeValue">1.0x</span>
+                </label>
+                <input type="range" id="starSizeSlider" min="1" max="10" step="0.1" value="1">
+            </div>
 
-        <div class="control-group">
-            <label>Background Color</label>
-            <input type="color" id="backgroundPicker" value="#000000"
-                style="width: 100%; height: 24px; cursor: pointer; background: #2a2a2a; border: 1px solid #0fff83; border-radius: 3px;">
-        </div>
-
-        <div class="control-group">
-            <label>Motion Trail</label>
-            <button id="trailToggle" style="margin-top: 0;">Off</button>
-        </div>
-
-        <div class="control-group" id="trailAmountGroup" style="display: none;">
-            <label>
-                Trail Amount
-                <span class="value-display" id="trailAmountValue">50%</span>
-            </label>
-            <input type="range" id="trailAmountSlider" min="1" max="99" step="1" value="50">
-        </div>
-
-        <div class="control-group">
-            <label>Stars</label>
-            <button id="starsToggle" style="margin-top: 0;">Off</button>
-        </div>
-
-        <div class="control-group">
-            <label>Star Mode</label>
-            <button id="starModeToggle" style="margin-top: 0;">Parallax</button>
-        </div>
-
-        <div class="control-group" id="tunnelSpeedGroup" style="display: none;">
-            <label>
-                Tunnel Speed
-                <span class="value-display" id="tunnelSpeedValue">2.0x</span>
-            </label>
-            <input type="range" id="tunnelSpeedSlider" min="-10" max="10" step="0.1" value="2">
-        </div>
-
-        <div class="control-group">
-            <label>
-                Star Direction & Speed
-                <span class="value-display" id="starSpeedDisplay">0.0, 0.0</span>
-            </label>
-            <div class="joystick-pad" id="starJoystick">
-                <div class="joystick-axis joystick-axis-x"></div>
-                <div class="joystick-axis joystick-axis-y"></div>
-                <div class="joystick-dot" id="starJoystickDot"></div>
+            <div class="control-group">
+                <label>
+                    Star Count
+                    <span class="value-display" id="starCountValue">200</span>
+                </label>
+                <input type="range" id="starCountSlider" min="10" max="1000" step="10" value="200">
             </div>
         </div>
 
-        <div class="control-group">
-            <label>Star X Speed Automation</label>
-            <button id="starSpeedXAutoToggle" style="margin-top: 0;">Off</button>
-        </div>
+        <div class="tab-content" id="tab-stripes">
+            <div class="control-group">
+                <label>Synthwave Stripes</label>
+                <button id="synthStripesToggle" style="margin-top: 0;">Off</button>
+            </div>
 
-        <div class="control-group" id="starSpeedXMinGroup" style="display: none;">
-            <label>
-                X Min
-                <input type="number" class="inline-input" id="starSpeedXMinInput" min="-5" max="5" step="0.1" value="-3.0">
-            </label>
-            <input type="range" id="starSpeedXMinSlider" min="-5" max="5" step="0.1" value="-3">
-        </div>
+            <div class="control-group" id="synthStripesColorGroup" style="display: none;">
+                <label>Stripe Color</label>
+                <input type="color" id="synthStripesColorPicker" value="#00ffff"
+                    style="width: 100%; height: 24px; cursor: pointer; background: #2a2a2a; border: 1px solid #0fff83; border-radius: 3px;">
+            </div>
 
-        <div class="control-group" id="starSpeedXMaxGroup" style="display: none;">
-            <label>
-                X Max
-                <input type="number" class="inline-input" id="starSpeedXMaxInput" min="-5" max="5" step="0.1" value="3.0">
-            </label>
-            <input type="range" id="starSpeedXMaxSlider" min="-5" max="5" step="0.1" value="3">
-        </div>
+            <div class="control-group" id="synthStripesThicknessGroup" style="display: none;">
+                <label>
+                    Stripe Thickness
+                    <span class="value-display" id="synthStripesThicknessValue">4.0px</span>
+                </label>
+                <input type="range" id="synthStripesThicknessSlider" min="1" max="100" step="1" value="20">
+            </div>
 
-        <div class="control-group" id="starSpeedXSpeedGroup" style="display: none;">
-            <label>
-                X Speed
-                <span class="value-display" id="starSpeedXSpeedValue">1.0x</span>
-            </label>
-            <input type="range" id="starSpeedXSpeedSlider" min="0.1" max="5" step="0.1" value="1">
-        </div>
+            <div class="control-group" id="synthStripesCountGroup" style="display: none;">
+                <label>
+                    Stripe Count
+                    <span class="value-display" id="synthStripesCountValue">6</span>
+                </label>
+                <input type="range" id="synthStripesCountSlider" min="2" max="20" step="1" value="6">
+            </div>
 
-        <div class="control-group">
-            <label>Star Y Speed Automation</label>
-            <button id="starSpeedYAutoToggle" style="margin-top: 0;">Off</button>
-        </div>
+            <div class="control-group" id="synthStripesSpeedGroup" style="display: none;">
+                <label>
+                    Stripe Speed
+                    <span class="value-display" id="synthStripesSpeedValue">2.0x</span>
+                </label>
+                <input type="range" id="synthStripesSpeedSlider" min="0.1" max="10" step="0.1" value="2">
+            </div>
 
-        <div class="control-group" id="starSpeedYMinGroup" style="display: none;">
-            <label>
-                Y Min
-                <input type="number" class="inline-input" id="starSpeedYMinInput" min="-5" max="5" step="0.1" value="-3.0">
-            </label>
-            <input type="range" id="starSpeedYMinSlider" min="-5" max="5" step="0.1" value="-3">
-        </div>
-
-        <div class="control-group" id="starSpeedYMaxGroup" style="display: none;">
-            <label>
-                Y Max
-                <input type="number" class="inline-input" id="starSpeedYMaxInput" min="-5" max="5" step="0.1" value="3.0">
-            </label>
-            <input type="range" id="starSpeedYMaxSlider" min="-5" max="5" step="0.1" value="3">
-        </div>
-
-        <div class="control-group" id="starSpeedYSpeedGroup" style="display: none;">
-            <label>
-                Y Speed
-                <span class="value-display" id="starSpeedYSpeedValue">1.0x</span>
-            </label>
-            <input type="range" id="starSpeedYSpeedSlider" min="0.1" max="5" step="0.1" value="1">
-        </div>
-
-        <div class="control-group">
-            <label>Star Color</label>
-            <input type="color" id="starColorPicker" value="#ffffff">
-        </div>
-
-        <div class="control-group">
-            <label>
-                Star Depth Contrast
-                <span class="value-display" id="starContrastValue">100%</span>
-            </label>
-            <input type="range" id="starContrastSlider" min="0" max="100" step="1" value="100">
-        </div>
-
-        <div class="control-group">
-            <label>
-                Star Size
-                <span class="value-display" id="starSizeValue">1.0x</span>
-            </label>
-            <input type="range" id="starSizeSlider" min="1" max="10" step="0.1" value="1">
-        </div>
-
-        <div class="control-group">
-            <label>
-                Star Count
-                <span class="value-display" id="starCountValue">200</span>
-            </label>
-            <input type="range" id="starCountSlider" min="10" max="1000" step="10" value="200">
-        </div>
-
-        <div class="control-group">
-            <label>Synthwave Stripes</label>
-            <button id="synthStripesToggle" style="margin-top: 0;">Off</button>
-        </div>
-
-        <div class="control-group" id="synthStripesColorGroup" style="display: none;">
-            <label>Stripe Color</label>
-            <input type="color" id="synthStripesColorPicker" value="#00ffff"
-                style="width: 100%; height: 24px; cursor: pointer; background: #2a2a2a; border: 1px solid #0fff83; border-radius: 3px;">
-        </div>
-
-        <div class="control-group" id="synthStripesThicknessGroup" style="display: none;">
-            <label>
-                Stripe Thickness
-                <span class="value-display" id="synthStripesThicknessValue">4.0px</span>
-            </label>
-            <input type="range" id="synthStripesThicknessSlider" min="1" max="100" step="1" value="20">
-        </div>
-
-        <div class="control-group" id="synthStripesCountGroup" style="display: none;">
-            <label>
-                Stripe Count
-                <span class="value-display" id="synthStripesCountValue">6</span>
-            </label>
-            <input type="range" id="synthStripesCountSlider" min="2" max="20" step="1" value="6">
-        </div>
-
-        <div class="control-group" id="synthStripesSpeedGroup" style="display: none;">
-            <label>
-                Stripe Speed
-                <span class="value-display" id="synthStripesSpeedValue">2.0x</span>
-            </label>
-            <input type="range" id="synthStripesSpeedSlider" min="0.1" max="10" step="0.1" value="2">
-        </div>
-
-        <div class="control-group" id="synthStripesStartYGroup" style="display: none;">
-            <label>
-                Horizon Height
-                <span class="value-display" id="synthStripesStartYValue">50%</span>
-            </label>
-            <input type="range" id="synthStripesStartYSlider" min="10" max="90" step="1" value="50">
+            <div class="control-group" id="synthStripesStartYGroup" style="display: none;">
+                <label>
+                    Horizon Height
+                    <span class="value-display" id="synthStripesStartYValue">50%</span>
+                </label>
+                <input type="range" id="synthStripesStartYSlider" min="10" max="90" step="1" value="50">
+            </div>
         </div>
     </div>
 
@@ -667,6 +679,7 @@
                     <button class="seq-steps-btn active" data-steps="16">16</button>
                     <button class="seq-steps-btn" data-steps="32">32</button>
                     <button class="seq-steps-btn" data-steps="64">64</button>
+                    <button class="seq-steps-btn" data-steps="128">128</button>
                 </div>
             </div>
             <div class="seq-param">
@@ -676,6 +689,17 @@
                     <button class="seq-page-btn" data-page="1" style="display:none">2</button>
                     <button class="seq-page-btn" data-page="2" style="display:none">3</button>
                     <button class="seq-page-btn" data-page="3" style="display:none">4</button>
+                    <button class="seq-page-btn" data-page="4" style="display:none">5</button>
+                    <button class="seq-page-btn" data-page="5" style="display:none">6</button>
+                    <button class="seq-page-btn" data-page="6" style="display:none">7</button>
+                    <button class="seq-page-btn" data-page="7" style="display:none">8</button>
+                </div>
+            </div>
+            <div class="seq-param">
+                <div class="seq-btn-group">
+                    <button class="seq-copy-btn" id="seqCopyBtn">Copy</button>
+                    <button class="seq-copy-btn" id="seqPasteBtn" disabled>Paste</button>
+                    <button class="seq-copy-btn" id="seqDupeBtn">Dupe All</button>
                 </div>
             </div>
         </div>
@@ -841,6 +865,27 @@
     <script src="index.js"></script>
     <script src="export.js"></script>
     <script>BinExport.init();</script>
+    <script>
+    (function() {
+        const tabBar = document.querySelector('.tab-bar');
+        const tabBtns = tabBar.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.right-panel > .tab-content');
+
+        tabBar.addEventListener('click', function(e) {
+            const btn = e.target.closest('.tab-btn');
+            if (!btn) return;
+
+            const targetId = btn.dataset.tab;
+
+            tabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            tabContents.forEach(tc => {
+                tc.classList.toggle('active', tc.id === targetId);
+            });
+        });
+    })();
+    </script>
 </body>
 
 </html>

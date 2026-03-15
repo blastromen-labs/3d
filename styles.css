@@ -58,24 +58,57 @@ body {
     grid-row: 2 / 4;
 }
 
-.model-controls {
+.right-panel {
     background: var(--color-bg-panel);
     padding: 10px;
     border: var(--border-width) solid var(--color-primary);
     border-radius: var(--border-radius-lg);
     height: fit-content;
     grid-column: 4;
-    grid-row: 2;
+    grid-row: 2 / 4;
+    overflow-y: auto;
+    max-height: 90vh;
 }
 
-.appearance-controls {
-    background: var(--color-bg-panel);
-    padding: 10px;
-    border: var(--border-width) solid var(--color-primary);
-    border-radius: var(--border-radius-lg);
-    height: fit-content;
-    grid-column: 4;
-    grid-row: 3;
+.tab-bar {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--color-primary);
+    padding-bottom: 6px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 4px 2px !important;
+    margin-top: 0 !important;
+    font-size: 10px !important;
+    background: var(--color-bg-input);
+    color: var(--color-primary);
+    border: 1px solid #444;
+    border-radius: var(--border-radius-sm) var(--border-radius-sm) 0 0;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.tab-btn:hover {
+    border-color: var(--color-primary);
+    background: rgba(15, 255, 131, 0.1);
+}
+
+.tab-btn.active {
+    background: var(--color-primary);
+    color: var(--color-text-dark);
+    border-color: var(--color-primary);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
 }
 
 .control-group {
@@ -165,8 +198,8 @@ button:hover {
     color: var(--color-text-dark);
 }
 
-/* Compact buttons inside the three control panels */
-:is(.controls, .model-controls, .appearance-controls) button {
+/* Compact buttons inside the control panels */
+:is(.controls, .right-panel) button {
     padding: 4px 6px;
     margin-top: 3px;
     font-size: 11px;
@@ -178,10 +211,24 @@ h2 {
     padding-bottom: var(--spacing-md);
 }
 
-:is(.controls, .model-controls, .appearance-controls) h2 {
+:is(.controls, .right-panel) h2 {
     font-size: 13px;
     padding-bottom: 5px;
     margin-bottom: 6px;
+}
+
+h2.panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.reset-btn {
+    width: auto !important;
+    padding: 2px 8px !important;
+    margin-top: 0 !important;
+    font-size: 10px !important;
+    flex-shrink: 0;
 }
 
 .modal {
@@ -396,6 +443,22 @@ textarea {
 .seq-page-btn.active {
     background: var(--color-primary);
     color: var(--color-text-dark);
+}
+
+.seq-page-btn.seq-page-playing {
+    border-bottom: 2px solid var(--color-primary);
+}
+
+.seq-copy-btn {
+    width: auto !important;
+    padding: 4px 10px !important;
+    font-size: 11px !important;
+    margin-top: 0 !important;
+}
+
+.seq-copy-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
 
 .seq-sample-player {
