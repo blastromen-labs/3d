@@ -305,12 +305,14 @@ textarea {
 }
 
 .color-count-btn.active,
-.obj-count-btn.active {
+.obj-count-btn.active,
+.grad-mode-btn.active {
     background: var(--color-primary);
     color: var(--color-text-dark);
 }
 
-.obj-count-btn {
+.obj-count-btn,
+.grad-mode-btn {
     width: auto !important;
     flex: 1;
     padding: 3px 0 !important;

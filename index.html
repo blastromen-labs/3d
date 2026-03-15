@@ -412,6 +412,25 @@
                 <button id="gradientToggle" style="margin-top: 0;">Off</button>
             </div>
 
+            <div class="control-group" id="gradientModeGroup" style="display: none;">
+                <label>Gradient Mode</label>
+                <div class="color-count-btns">
+                    <button class="grad-mode-btn active" data-mode="face">Per Face</button>
+                    <button class="grad-mode-btn" data-mode="global">Screen</button>
+                    <button class="grad-mode-btn" data-mode="painted">Painted</button>
+                </div>
+            </div>
+
+            <div class="control-group" id="gradientDirectionGroup" style="display: none;">
+                <label>Gradient Direction</label>
+                <select id="gradientDirectionSelect">
+                    <option value="tb" selected>Top → Bottom</option>
+                    <option value="bt">Bottom → Top</option>
+                    <option value="lr">Left → Right</option>
+                    <option value="rl">Right → Left</option>
+                </select>
+            </div>
+
             <div class="control-group" id="gradientVibrancyGroup" style="display: none;">
                 <label>
                     Gradient Vibrancy

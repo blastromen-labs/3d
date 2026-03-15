@@ -224,6 +224,21 @@ function interpolateColorHSL(hex1, hex2, t) {
     return hslToHex(h, s, l);
 }
 
+function sampleGradientColor(colors, t) {
+    t = Math.max(0, Math.min(1, t));
+    if (colors.length === 1) return colors[0];
+    const vibrancy = config.gradientVibrancy / 100;
+    const segment = t * (colors.length - 1);
+    const i = Math.min(Math.floor(segment), colors.length - 2);
+    let lt = segment - i;
+    if (vibrancy > 0) {
+        const power = 1 + vibrancy * 10;
+        if (lt < 0.5) lt = 0.5 * Math.pow(2 * lt, power);
+        else lt = 1 - 0.5 * Math.pow(2 * (1 - lt), power);
+    }
+    return interpolateColorHSL(colors[i], colors[i + 1], lt);
+}
+
 function applyMasterColor(hexColor) {
     const [r, g, b] = hexToRgbComponents(hexColor);
     let [h, s, l] = rgbToHsl(r, g, b);
@@ -326,6 +341,8 @@ let config = {
     colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00'],
     colorCount: 1,
     gradientEnabled: false,
+    gradientMode: 'face',
+    gradientDirection: 'tb',
     gradientVibrancy: 0,
     masterHue: 0,
     masterHueAutoEnabled: false,
@@ -720,6 +737,10 @@ const colorGroups = [
     document.getElementById('color4Group'),
 ];
 const gradientToggle = document.getElementById('gradientToggle');
+const gradientModeGroup = document.getElementById('gradientModeGroup');
+const gradientModeBtns = document.querySelectorAll('.grad-mode-btn');
+const gradientDirectionGroup = document.getElementById('gradientDirectionGroup');
+const gradientDirectionSelect = document.getElementById('gradientDirectionSelect');
 const gradientVibrancySlider = document.getElementById('gradientVibrancySlider');
 const gradientVibrancyValue = document.getElementById('gradientVibrancyValue');
 const gradientVibrancyGroup = document.getElementById('gradientVibrancyGroup');
@@ -1115,7 +1136,22 @@ document.querySelectorAll('.color-count-btn').forEach(btn => {
 gradientToggle.addEventListener('click', () => {
     config.gradientEnabled = !config.gradientEnabled;
     gradientToggle.textContent = config.gradientEnabled ? 'On' : 'Off';
-    gradientVibrancyGroup.style.display = config.gradientEnabled ? '' : 'none';
+    const show = config.gradientEnabled ? '' : 'none';
+    gradientModeGroup.style.display = show;
+    gradientVibrancyGroup.style.display = show;
+    gradientDirectionGroup.style.display = config.gradientEnabled && config.gradientMode !== 'face' ? '' : 'none';
+});
+
+gradientModeGroup.addEventListener('click', (e) => {
+    const btn = e.target.closest('.grad-mode-btn');
+    if (!btn) return;
+    config.gradientMode = btn.dataset.mode;
+    gradientModeBtns.forEach(b => b.classList.toggle('active', b.dataset.mode === config.gradientMode));
+    gradientDirectionGroup.style.display = config.gradientMode !== 'face' ? '' : 'none';
+});
+
+gradientDirectionSelect.addEventListener('change', (e) => {
+    config.gradientDirection = e.target.value;
 });
 
 // Gradient vibrancy
@@ -1866,6 +1902,8 @@ resetBtn.addEventListener('click', () => {
     config.colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00'];
     config.colorCount = 1;
     config.gradientEnabled = false;
+    config.gradientMode = 'face';
+    config.gradientDirection = 'tb';
     config.gradientVibrancy = 0;
     config.masterHue = 0;
     config.masterHueAutoEnabled = false;
@@ -2010,6 +2048,10 @@ resetBtn.addEventListener('click', () => {
     colorPickers[3].value = '#ffff00';
     updateColorCount(1);
     gradientToggle.textContent = 'Off';
+    gradientModeGroup.style.display = 'none';
+    gradientModeBtns.forEach(b => b.classList.toggle('active', b.dataset.mode === 'face'));
+    gradientDirectionGroup.style.display = 'none';
+    gradientDirectionSelect.value = 'tb';
     gradientVibrancyGroup.style.display = 'none';
     gradientVibrancySlider.value = 0;
     gradientVibrancyValue.textContent = '0%';
@@ -2387,6 +2429,84 @@ function renderScene(dt) {
         };
     }
 
+    const useGlobalGrad = config.gradientEnabled && config.gradientMode === 'global' && effectiveColors.length > 1;
+    const usePaintedGrad = config.gradientEnabled && config.gradientMode === 'painted' && effectiveColors.length > 1;
+    let globalGradBounds = null;
+    let paintedBounds = null;
+    if (useGlobalGrad || usePaintedGrad) {
+        let gMinX = Infinity, gMinY = Infinity, gMaxX = -Infinity, gMaxY = -Infinity;
+        let mMinX = Infinity, mMinY = Infinity, mMinZ = Infinity;
+        let mMaxX = -Infinity, mMaxY = -Infinity, mMaxZ = -Infinity;
+        for (const obj of objectsToRender) {
+            for (let vi = 0; vi < obj.model.vs.length; vi++) {
+                const v = getVertex(obj.model, vi, null);
+                const s = obj.scale;
+                const mx = v.x * s, my = v.y * s + obj.yOffset, mz = v.z * s;
+                if (mx < mMinX) mMinX = mx; if (mx > mMaxX) mMaxX = mx;
+                if (my < mMinY) mMinY = my; if (my > mMaxY) mMaxY = my;
+                if (mz < mMinZ) mMinZ = mz; if (mz > mMaxZ) mMaxZ = mz;
+                if (useGlobalGrad) {
+                    const rotated = rotate_xyz({ x: mx, y: my, z: mz }, currentAngleX, currentAngleY, currentAngleZ);
+                    const translated = translate_z(rotated, dz);
+                    if (translated.z <= 0.01) continue;
+                    const p = project(translated);
+                    p.y += dy;
+                    const sp = screen(p);
+                    if (sp.x < gMinX) gMinX = sp.x;
+                    if (sp.x > gMaxX) gMaxX = sp.x;
+                    if (sp.y < gMinY) gMinY = sp.y;
+                    if (sp.y > gMaxY) gMaxY = sp.y;
+                }
+            }
+        }
+        if (useGlobalGrad) globalGradBounds = { minX: gMinX, minY: gMinY, maxX: gMaxX, maxY: gMaxY };
+        if (usePaintedGrad) paintedBounds = { minX: mMinX, minY: mMinY, minZ: mMinZ, maxX: mMaxX, maxY: mMaxY, maxZ: mMaxZ };
+    }
+
+    let paintedGradStart = null, paintedGradEnd = null;
+    if (usePaintedGrad && paintedBounds) {
+        const b = paintedBounds;
+        const cx = (b.minX + b.maxX) / 2, cy = (b.minY + b.maxY) / 2, cz = (b.minZ + b.maxZ) / 2;
+        let startPt, endPt;
+        switch (config.gradientDirection) {
+            case 'tb': startPt = { x: cx, y: b.maxY, z: cz }; endPt = { x: cx, y: b.minY, z: cz }; break;
+            case 'bt': startPt = { x: cx, y: b.minY, z: cz }; endPt = { x: cx, y: b.maxY, z: cz }; break;
+            case 'lr': startPt = { x: b.minX, y: cy, z: cz }; endPt = { x: b.maxX, y: cy, z: cz }; break;
+            case 'rl': startPt = { x: b.maxX, y: cy, z: cz }; endPt = { x: b.minX, y: cy, z: cz }; break;
+            default:   startPt = { x: cx, y: b.maxY, z: cz }; endPt = { x: cx, y: b.minY, z: cz }; break;
+        }
+        const toScreen = (pt) => {
+            const rotated = rotate_xyz(pt, currentAngleX, currentAngleY, currentAngleZ);
+            const translated = translate_z(rotated, dz);
+            if (translated.z <= 0.01) translated.z = 0.01;
+            const p = project(translated);
+            p.y += dy;
+            return screen(p);
+        };
+        paintedGradStart = toScreen(startPt);
+        paintedGradEnd = toScreen(endPt);
+    }
+
+    function createPaintedGradient(colors, brightness, contrast) {
+        const grad = ctx.createLinearGradient(paintedGradStart.x, paintedGradStart.y, paintedGradEnd.x, paintedGradEnd.y);
+        addGradientStops(grad, colors, c => brightnessToColor(brightness, c, contrast));
+        return grad;
+    }
+
+    function createDirectionalGradient(bounds, colors, brightness, contrast) {
+        const { minX, minY, maxX, maxY } = bounds;
+        let grad;
+        switch (config.gradientDirection) {
+            case 'tb': grad = ctx.createLinearGradient(0, minY, 0, maxY); break;
+            case 'bt': grad = ctx.createLinearGradient(0, maxY, 0, minY); break;
+            case 'lr': grad = ctx.createLinearGradient(minX, 0, maxX, 0); break;
+            case 'rl': grad = ctx.createLinearGradient(maxX, 0, minX, 0); break;
+            default:   grad = ctx.createLinearGradient(0, minY, 0, maxY); break;
+        }
+        addGradientStops(grad, colors, c => brightnessToColor(brightness, c, contrast));
+        return grad;
+    }
+
     if (solidAmount > 0) {
         const facesWithDepth = [];
 
@@ -2448,7 +2568,11 @@ function renderScene(dt) {
             });
 
             let faceColor;
-            if (config.gradientEnabled && effectiveColors.length > 1) {
+            if (usePaintedGrad) {
+                faceColor = createPaintedGradient(effectiveColors, face.brightness, config.contrast);
+            } else if (useGlobalGrad) {
+                faceColor = createDirectionalGradient(globalGradBounds, effectiveColors, face.brightness, config.contrast);
+            } else if (config.gradientEnabled && effectiveColors.length > 1) {
                 faceColor = createFaceGradient(screenPoints, effectiveColors, face.brightness, config.contrast);
             } else {
                 const ci = face.faceIndex % effectiveColors.length;
@@ -2491,7 +2615,11 @@ function renderScene(dt) {
                     const sB = screen(pB);
 
                     let lineColor;
-                    if (config.gradientEnabled && effectiveColors.length > 1) {
+                    if (usePaintedGrad) {
+                        lineColor = createPaintedGradient(effectiveColors, 1, 0);
+                    } else if (useGlobalGrad) {
+                        lineColor = createDirectionalGradient(globalGradBounds, effectiveColors, 1, 0);
+                    } else if (config.gradientEnabled && effectiveColors.length > 1) {
                         const grad = ctx.createLinearGradient(sA.x, sA.y, sB.x, sB.y);
                         addGradientStops(grad, effectiveColors, c => c);
                         lineColor = grad;
