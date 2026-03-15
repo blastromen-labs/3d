@@ -2096,16 +2096,29 @@ function renderScene(dt) {
     const effectiveColors = getEffectiveColors();
     const solidAmount = config.solidMode ? 1 : Sequencer.getSolidAmount();
     const distortAmt = Sequencer.getDistortAmount();
-    const dNoise = Sequencer.distortNoise;
 
-    function getVertex(model, vi) {
+    function computeFaceNormal(model, face) {
+        if (face.length < 3) return { x: 0, y: 0, z: 0 };
+        const v0 = model.vs[face[0]];
+        const v1 = model.vs[face[1]];
+        const v2 = model.vs[face[2]];
+        const e1x = v1.x - v0.x, e1y = v1.y - v0.y, e1z = v1.z - v0.z;
+        const e2x = v2.x - v0.x, e2y = v2.y - v0.y, e2z = v2.z - v0.z;
+        const nx = e1y * e2z - e1z * e2y;
+        const ny = e1z * e2x - e1x * e2z;
+        const nz = e1x * e2y - e1y * e2x;
+        const len = Math.sqrt(nx * nx + ny * ny + nz * nz);
+        if (len < 0.0001) return { x: 0, y: 0, z: 0 };
+        return { x: nx / len, y: ny / len, z: nz / len };
+    }
+
+    function getVertex(model, vi, faceNormal) {
         const v = model.vs[vi];
-        if (distortAmt <= 0) return v;
-        const n = dNoise[vi % dNoise.length];
+        if (distortAmt <= 0 || !faceNormal) return v;
         return {
-            x: v.x + n.x * distortAmt,
-            y: v.y + n.y * distortAmt,
-            z: v.z + n.z * distortAmt,
+            x: v.x + faceNormal.x * distortAmt,
+            y: v.y + faceNormal.y * distortAmt,
+            z: v.z + faceNormal.z * distortAmt,
         };
     }
 
@@ -2116,11 +2129,12 @@ function renderScene(dt) {
             for (const f of obj.model.fs) {
                 if (f.length < 3) continue;
 
+                const faceNormal = distortAmt > 0 ? computeFaceNormal(obj.model, f) : null;
                 const transformedVertices = [];
                 let allValid = true;
 
                 for (let i = 0; i < f.length; i++) {
-                    const v = getVertex(obj.model, f[i]);
+                    const v = getVertex(obj.model, f[i], faceNormal);
                     const s = obj.scale;
                     const offset = { x: v.x * s, y: v.y * s + obj.yOffset, z: v.z * s };
                     const rotated = rotate_xyz(offset, currentAngleX, currentAngleY, currentAngleZ);
@@ -2186,9 +2200,10 @@ function renderScene(dt) {
         let edgeIdx = 0;
         for (const obj of objectsToRender) {
             for (const f of obj.model.fs) {
+                const faceNormal = distortAmt > 0 ? computeFaceNormal(obj.model, f) : null;
                 for (let i = 0; i < f.length; ++i) {
-                    const a = getVertex(obj.model, f[i]);
-                    const b = getVertex(obj.model, f[(i + 1) % f.length]);
+                    const a = getVertex(obj.model, f[i], faceNormal);
+                    const b = getVertex(obj.model, f[(i + 1) % f.length], faceNormal);
                     const s = obj.scale;
 
                     const aOff = { x: a.x * s, y: a.y * s + obj.yOffset, z: a.z * s };

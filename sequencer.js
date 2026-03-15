@@ -29,17 +29,6 @@ const Sequencer = (() => {
     const LOOKAHEAD = 0.1;
     const SCHEDULE_INTERVAL = 25;
 
-    // Pre-generated random offsets for vertex distortion
-    const DISTORT_NOISE_SIZE = 512;
-    const distortNoise = [];
-    for (let i = 0; i < DISTORT_NOISE_SIZE; i++) {
-        distortNoise.push({
-            x: (Math.random() - 0.5) * 2,
-            y: (Math.random() - 0.5) * 2,
-            z: (Math.random() - 0.5) * 2,
-        });
-    }
-
     const MOD_TARGETS = [
         { id: 'none', label: 'None' },
         { id: 'zoom', label: 'Zoom' },
@@ -905,7 +894,6 @@ const Sequencer = (() => {
         getSolidAmount,
         getDistortAmount,
         getMorphMod,
-        distortNoise,
         triggerStepSilent,
         resetModulations,
         saveModState,
