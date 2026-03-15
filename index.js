@@ -373,6 +373,7 @@ let config = {
     morphEnabled: false,
     morphTarget: 'pyramid',
     morphSpeed: 0.5,
+    morphStay: 0,
     objectCount: 1,
     obj1Scale: 1.0,
     obj2Scale: 1.0,
@@ -420,6 +421,8 @@ let dz = focalLength;
 
 // Morph animation state
 let morphTime = 0;
+let morphHoldTimer = 0;
+let morphNextHoldAt = 1;
 
 function computeMorphedModel(primary, secondary, t) {
     const pVs = primary.vs;
@@ -850,6 +853,8 @@ const morphToggle = document.getElementById('morphToggle');
 const morphTargetSelect = document.getElementById('morphTarget');
 const morphSpeedSlider = document.getElementById('morphSpeedSlider');
 const morphSpeedValue = document.getElementById('morphSpeedValue');
+const morphStaySlider = document.getElementById('morphStaySlider');
+const morphStayValue = document.getElementById('morphStayValue');
 const editModelBtn = document.getElementById('editModelBtn');
 const savePresetBtn = document.getElementById('savePresetBtn');
 const modelEditorModal = document.getElementById('modelEditorModal');
@@ -1501,17 +1506,28 @@ modelPresetSelect.addEventListener('change', (e) => {
 morphToggle.addEventListener('click', () => {
     config.morphEnabled = !config.morphEnabled;
     morphToggle.textContent = config.morphEnabled ? 'On' : 'Off';
-    if (config.morphEnabled) morphTime = 0;
+    if (config.morphEnabled) {
+        morphTime = 0;
+        morphHoldTimer = 0;
+        morphNextHoldAt = 1;
+    }
 });
 
 morphTargetSelect.addEventListener('change', (e) => {
     config.morphTarget = e.target.value;
     morphTime = 0;
+    morphHoldTimer = 0;
+    morphNextHoldAt = 1;
 });
 
 morphSpeedSlider.addEventListener('input', (e) => {
     config.morphSpeed = parseFloat(e.target.value);
     morphSpeedValue.textContent = config.morphSpeed.toFixed(1) + 'x';
+});
+
+morphStaySlider.addEventListener('input', (e) => {
+    config.morphStay = parseFloat(e.target.value);
+    morphStayValue.textContent = config.morphStay.toFixed(1) + 's';
 });
 
 // Object count buttons
@@ -1895,6 +1911,7 @@ resetBtn.addEventListener('click', () => {
     config.morphEnabled = false;
     config.morphTarget = 'pyramid';
     config.morphSpeed = 0.5;
+    config.morphStay = 0;
     config.objectCount = 1;
     config.obj1Scale = 1.0;
     config.obj2Scale = 1.0;
@@ -1937,6 +1954,8 @@ resetBtn.addEventListener('click', () => {
     config.formExplodeSpeed = 1.0;
     config.formExplodeAutoTime = 0;
     morphTime = 0;
+    morphHoldTimer = 0;
+    morphNextHoldAt = 1;
 
     loadSecondModel('torus');
     modelPreset2Select.value = 'torus';
@@ -2125,6 +2144,10 @@ resetBtn.addEventListener('click', () => {
     morphTargetSelect.value = 'pyramid';
     morphSpeedSlider.value = 0.5;
     morphSpeedValue.textContent = '0.5x';
+    morphStaySlider.value = 0;
+    morphStayValue.textContent = '0.0s';
+    morphHoldTimer = 0;
+    morphNextHoldAt = 1;
 
     dz = fovToFocal(60);
 });
@@ -2274,7 +2297,16 @@ function renderScene(dt) {
     // Morph computation for object 1
     let activeModel = currentModel;
     if (config.morphEnabled) {
-        morphTime += dt * config.morphSpeed;
+        if (morphHoldTimer > 0) {
+            morphHoldTimer -= dt;
+        } else {
+            morphTime += dt * config.morphSpeed;
+            if (config.morphStay > 0 && morphTime >= morphNextHoldAt) {
+                morphTime = morphNextHoldAt;
+                morphNextHoldAt += 1;
+                morphHoldTimer = config.morphStay;
+            }
+        }
         const t = (1 - Math.cos(morphTime * Math.PI)) / 2;
         const target = modelPresets[config.morphTarget];
         if (target) {
