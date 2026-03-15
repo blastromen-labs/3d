@@ -2355,9 +2355,9 @@ function renderScene(dt) {
     const effectiveColors = getEffectiveColors();
     const solidAmount = config.solidMode ? 1 : Sequencer.getSolidAmount();
     const distortAmt = Sequencer.getDistortAmount();
-    const fsx = config.formScaleX;
-    const fsy = config.formScaleY;
-    const fsz = config.formScaleZ;
+    const fsx = config.formScaleX + Sequencer.getModOffset('formScaleX');
+    const fsy = config.formScaleY + Sequencer.getModOffset('formScaleY');
+    const fsz = config.formScaleZ + Sequencer.getModOffset('formScaleZ');
     const totalExplode = distortAmt + config.formExplode;
     const needFormScale = fsx !== 1 || fsy !== 1 || fsz !== 1;
 

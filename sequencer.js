@@ -40,6 +40,9 @@ const Sequencer = (() => {
         { id: 'angleX', label: 'X Angle' },
         { id: 'angleY', label: 'Y Angle' },
         { id: 'angleZ', label: 'Z Angle' },
+        { id: 'formScaleX', label: 'X Scale' },
+        { id: 'formScaleY', label: 'Y Scale' },
+        { id: 'formScaleZ', label: 'Z Scale' },
     ];
 
     const COLOR_MOD_TARGETS = [
