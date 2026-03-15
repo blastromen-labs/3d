@@ -191,6 +191,7 @@
             <button class="tab-btn" data-tab="tab-master">Master</button>
             <button class="tab-btn" data-tab="tab-stars">Stars</button>
             <button class="tab-btn" data-tab="tab-stripes">Stripes</button>
+            <button class="tab-btn" data-tab="tab-form">Form</button>
         </div>
 
         <div class="tab-content active" id="tab-model">
@@ -656,6 +657,140 @@
                     <span class="value-display" id="synthStripesStartYValue">50%</span>
                 </label>
                 <input type="range" id="synthStripesStartYSlider" min="10" max="90" step="1" value="50">
+            </div>
+        </div>
+
+        <div class="tab-content" id="tab-form">
+            <div class="control-group">
+                <label>
+                    X Scale
+                    <span class="value-display" id="formScaleXValue">1.00</span>
+                </label>
+                <input type="range" id="formScaleXSlider" min="0.1" max="4" step="0.01" value="1">
+            </div>
+            <div class="control-group">
+                <label>X Scale Automation</label>
+                <button id="formScaleXAutoToggle" style="margin-top: 0;">Off</button>
+            </div>
+            <div class="control-group" id="formScaleXMinGroup" style="display: none;">
+                <label>
+                    Min
+                    <input type="number" class="inline-input" id="formScaleXMinInput" min="0.1" max="4" step="0.01" value="0.5">
+                </label>
+                <input type="range" id="formScaleXMinSlider" min="0.1" max="4" step="0.01" value="0.5">
+            </div>
+            <div class="control-group" id="formScaleXMaxGroup" style="display: none;">
+                <label>
+                    Max
+                    <input type="number" class="inline-input" id="formScaleXMaxInput" min="0.1" max="4" step="0.01" value="2.0">
+                </label>
+                <input type="range" id="formScaleXMaxSlider" min="0.1" max="4" step="0.01" value="2.0">
+            </div>
+            <div class="control-group" id="formScaleXSpeedGroup" style="display: none;">
+                <label>
+                    Speed
+                    <span class="value-display" id="formScaleXSpeedValue">1.0x</span>
+                </label>
+                <input type="range" id="formScaleXSpeedSlider" min="0.1" max="5" step="0.1" value="1">
+            </div>
+
+            <div class="control-group">
+                <label>
+                    Y Scale
+                    <span class="value-display" id="formScaleYValue">1.00</span>
+                </label>
+                <input type="range" id="formScaleYSlider" min="0.1" max="4" step="0.01" value="1">
+            </div>
+            <div class="control-group">
+                <label>Y Scale Automation</label>
+                <button id="formScaleYAutoToggle" style="margin-top: 0;">Off</button>
+            </div>
+            <div class="control-group" id="formScaleYMinGroup" style="display: none;">
+                <label>
+                    Min
+                    <input type="number" class="inline-input" id="formScaleYMinInput" min="0.1" max="4" step="0.01" value="0.5">
+                </label>
+                <input type="range" id="formScaleYMinSlider" min="0.1" max="4" step="0.01" value="0.5">
+            </div>
+            <div class="control-group" id="formScaleYMaxGroup" style="display: none;">
+                <label>
+                    Max
+                    <input type="number" class="inline-input" id="formScaleYMaxInput" min="0.1" max="4" step="0.01" value="2.0">
+                </label>
+                <input type="range" id="formScaleYMaxSlider" min="0.1" max="4" step="0.01" value="2.0">
+            </div>
+            <div class="control-group" id="formScaleYSpeedGroup" style="display: none;">
+                <label>
+                    Speed
+                    <span class="value-display" id="formScaleYSpeedValue">1.0x</span>
+                </label>
+                <input type="range" id="formScaleYSpeedSlider" min="0.1" max="5" step="0.1" value="1">
+            </div>
+
+            <div class="control-group">
+                <label>
+                    Z Scale
+                    <span class="value-display" id="formScaleZValue">1.00</span>
+                </label>
+                <input type="range" id="formScaleZSlider" min="0.1" max="4" step="0.01" value="1">
+            </div>
+            <div class="control-group">
+                <label>Z Scale Automation</label>
+                <button id="formScaleZAutoToggle" style="margin-top: 0;">Off</button>
+            </div>
+            <div class="control-group" id="formScaleZMinGroup" style="display: none;">
+                <label>
+                    Min
+                    <input type="number" class="inline-input" id="formScaleZMinInput" min="0.1" max="4" step="0.01" value="0.5">
+                </label>
+                <input type="range" id="formScaleZMinSlider" min="0.1" max="4" step="0.01" value="0.5">
+            </div>
+            <div class="control-group" id="formScaleZMaxGroup" style="display: none;">
+                <label>
+                    Max
+                    <input type="number" class="inline-input" id="formScaleZMaxInput" min="0.1" max="4" step="0.01" value="2.0">
+                </label>
+                <input type="range" id="formScaleZMaxSlider" min="0.1" max="4" step="0.01" value="2.0">
+            </div>
+            <div class="control-group" id="formScaleZSpeedGroup" style="display: none;">
+                <label>
+                    Speed
+                    <span class="value-display" id="formScaleZSpeedValue">1.0x</span>
+                </label>
+                <input type="range" id="formScaleZSpeedSlider" min="0.1" max="5" step="0.1" value="1">
+            </div>
+
+            <div class="control-group">
+                <label>
+                    Explode
+                    <span class="value-display" id="formExplodeValue">0.00</span>
+                </label>
+                <input type="range" id="formExplodeSlider" min="0" max="1.5" step="0.01" value="0">
+            </div>
+            <div class="control-group">
+                <label>Explode Automation</label>
+                <button id="formExplodeAutoToggle" style="margin-top: 0;">Off</button>
+            </div>
+            <div class="control-group" id="formExplodeMinGroup" style="display: none;">
+                <label>
+                    Min
+                    <input type="number" class="inline-input" id="formExplodeMinInput" min="0" max="1.5" step="0.01" value="0">
+                </label>
+                <input type="range" id="formExplodeMinSlider" min="0" max="1.5" step="0.01" value="0">
+            </div>
+            <div class="control-group" id="formExplodeMaxGroup" style="display: none;">
+                <label>
+                    Max
+                    <input type="number" class="inline-input" id="formExplodeMaxInput" min="0" max="1.5" step="0.01" value="0.5">
+                </label>
+                <input type="range" id="formExplodeMaxSlider" min="0" max="1.5" step="0.01" value="0.5">
+            </div>
+            <div class="control-group" id="formExplodeSpeedGroup" style="display: none;">
+                <label>
+                    Speed
+                    <span class="value-display" id="formExplodeSpeedValue">1.0x</span>
+                </label>
+                <input type="range" id="formExplodeSpeedSlider" min="0.1" max="5" step="0.1" value="1">
             </div>
         </div>
     </div>

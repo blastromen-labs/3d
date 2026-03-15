@@ -390,6 +390,30 @@ let config = {
     synthStripesCount: 6,
     synthStripesSpeed: 2.0,
     synthStripesStartY: 0.5,
+    formScaleX: 1.0,
+    formScaleXAutoEnabled: false,
+    formScaleXMin: 0.5,
+    formScaleXMax: 2.0,
+    formScaleXSpeed: 1.0,
+    formScaleXAutoTime: 0,
+    formScaleY: 1.0,
+    formScaleYAutoEnabled: false,
+    formScaleYMin: 0.5,
+    formScaleYMax: 2.0,
+    formScaleYSpeed: 1.0,
+    formScaleYAutoTime: 0,
+    formScaleZ: 1.0,
+    formScaleZAutoEnabled: false,
+    formScaleZMin: 0.5,
+    formScaleZMax: 2.0,
+    formScaleZSpeed: 1.0,
+    formScaleZAutoTime: 0,
+    formExplode: 0,
+    formExplodeAutoEnabled: false,
+    formExplodeMin: 0,
+    formExplodeMax: 0.5,
+    formExplodeSpeed: 1.0,
+    formExplodeAutoTime: 0,
 };
 
 let dz = focalLength;
@@ -768,6 +792,59 @@ const synthStripesSpeedValueEl = document.getElementById('synthStripesSpeedValue
 const synthStripesStartYGroup = document.getElementById('synthStripesStartYGroup');
 const synthStripesStartYSlider = document.getElementById('synthStripesStartYSlider');
 const synthStripesStartYValueEl = document.getElementById('synthStripesStartYValue');
+
+const formScaleXSlider = document.getElementById('formScaleXSlider');
+const formScaleXValue = document.getElementById('formScaleXValue');
+const formScaleXAutoToggle = document.getElementById('formScaleXAutoToggle');
+const formScaleXMinSlider = document.getElementById('formScaleXMinSlider');
+const formScaleXMinInput = document.getElementById('formScaleXMinInput');
+const formScaleXMaxSlider = document.getElementById('formScaleXMaxSlider');
+const formScaleXMaxInput = document.getElementById('formScaleXMaxInput');
+const formScaleXSpeedSlider = document.getElementById('formScaleXSpeedSlider');
+const formScaleXSpeedValue = document.getElementById('formScaleXSpeedValue');
+const formScaleXMinGroup = document.getElementById('formScaleXMinGroup');
+const formScaleXMaxGroup = document.getElementById('formScaleXMaxGroup');
+const formScaleXSpeedGroup = document.getElementById('formScaleXSpeedGroup');
+
+const formScaleYSlider = document.getElementById('formScaleYSlider');
+const formScaleYValue = document.getElementById('formScaleYValue');
+const formScaleYAutoToggle = document.getElementById('formScaleYAutoToggle');
+const formScaleYMinSlider = document.getElementById('formScaleYMinSlider');
+const formScaleYMinInput = document.getElementById('formScaleYMinInput');
+const formScaleYMaxSlider = document.getElementById('formScaleYMaxSlider');
+const formScaleYMaxInput = document.getElementById('formScaleYMaxInput');
+const formScaleYSpeedSlider = document.getElementById('formScaleYSpeedSlider');
+const formScaleYSpeedValue = document.getElementById('formScaleYSpeedValue');
+const formScaleYMinGroup = document.getElementById('formScaleYMinGroup');
+const formScaleYMaxGroup = document.getElementById('formScaleYMaxGroup');
+const formScaleYSpeedGroup = document.getElementById('formScaleYSpeedGroup');
+
+const formScaleZSlider = document.getElementById('formScaleZSlider');
+const formScaleZValue = document.getElementById('formScaleZValue');
+const formScaleZAutoToggle = document.getElementById('formScaleZAutoToggle');
+const formScaleZMinSlider = document.getElementById('formScaleZMinSlider');
+const formScaleZMinInput = document.getElementById('formScaleZMinInput');
+const formScaleZMaxSlider = document.getElementById('formScaleZMaxSlider');
+const formScaleZMaxInput = document.getElementById('formScaleZMaxInput');
+const formScaleZSpeedSlider = document.getElementById('formScaleZSpeedSlider');
+const formScaleZSpeedValue = document.getElementById('formScaleZSpeedValue');
+const formScaleZMinGroup = document.getElementById('formScaleZMinGroup');
+const formScaleZMaxGroup = document.getElementById('formScaleZMaxGroup');
+const formScaleZSpeedGroup = document.getElementById('formScaleZSpeedGroup');
+
+const formExplodeSlider = document.getElementById('formExplodeSlider');
+const formExplodeValue = document.getElementById('formExplodeValue');
+const formExplodeAutoToggle = document.getElementById('formExplodeAutoToggle');
+const formExplodeMinSlider = document.getElementById('formExplodeMinSlider');
+const formExplodeMinInput = document.getElementById('formExplodeMinInput');
+const formExplodeMaxSlider = document.getElementById('formExplodeMaxSlider');
+const formExplodeMaxInput = document.getElementById('formExplodeMaxInput');
+const formExplodeSpeedSlider = document.getElementById('formExplodeSpeedSlider');
+const formExplodeSpeedValue = document.getElementById('formExplodeSpeedValue');
+const formExplodeMinGroup = document.getElementById('formExplodeMinGroup');
+const formExplodeMaxGroup = document.getElementById('formExplodeMaxGroup');
+const formExplodeSpeedGroup = document.getElementById('formExplodeSpeedGroup');
+
 const modelPresetSelect = document.getElementById('modelPreset');
 const morphToggle = document.getElementById('morphToggle');
 const morphTargetSelect = document.getElementById('morphTarget');
@@ -1346,6 +1423,74 @@ synthStripesStartYSlider.addEventListener('input', (e) => {
     synthStripesStartYValueEl.textContent = e.target.value + '%';
 });
 
+// --- Form tab controls ---
+
+function setupFormAutoParam(key, slider, valueEl, autoToggle, minSlider, minInput, maxSlider, maxInput, speedSlider, speedValueEl, minGroup, maxGroup, speedGroup, fmt) {
+    slider.addEventListener('input', (e) => {
+        config[key] = parseFloat(e.target.value);
+        valueEl.textContent = fmt(config[key]);
+        if (config[key + 'AutoEnabled']) {
+            config[key + 'AutoEnabled'] = false;
+            autoToggle.textContent = 'Off';
+            minGroup.style.display = 'none';
+            maxGroup.style.display = 'none';
+            speedGroup.style.display = 'none';
+        }
+    });
+
+    autoToggle.addEventListener('click', () => {
+        config[key + 'AutoEnabled'] = !config[key + 'AutoEnabled'];
+        autoToggle.textContent = config[key + 'AutoEnabled'] ? 'On' : 'Off';
+        const show = config[key + 'AutoEnabled'] ? '' : 'none';
+        minGroup.style.display = show;
+        maxGroup.style.display = show;
+        speedGroup.style.display = show;
+        if (config[key + 'AutoEnabled']) config[key + 'AutoTime'] = 0;
+    });
+
+    function updateMin(val) {
+        config[key + 'Min'] = val;
+        if (config[key + 'Min'] > config[key + 'Max']) config[key + 'Min'] = config[key + 'Max'];
+        minSlider.value = config[key + 'Min'];
+        minInput.value = config[key + 'Min'].toFixed(2);
+    }
+    function updateMax(val) {
+        config[key + 'Max'] = val;
+        if (config[key + 'Max'] < config[key + 'Min']) config[key + 'Max'] = config[key + 'Min'];
+        maxSlider.value = config[key + 'Max'];
+        maxInput.value = config[key + 'Max'].toFixed(2);
+    }
+
+    minSlider.addEventListener('input', (e) => updateMin(parseFloat(e.target.value)));
+    minInput.addEventListener('input', (e) => updateMin(parseFloat(e.target.value) || 0));
+    maxSlider.addEventListener('input', (e) => updateMax(parseFloat(e.target.value)));
+    maxInput.addEventListener('input', (e) => updateMax(parseFloat(e.target.value) || 0));
+
+    speedSlider.addEventListener('input', (e) => {
+        config[key + 'Speed'] = parseFloat(e.target.value);
+        speedValueEl.textContent = config[key + 'Speed'].toFixed(1) + 'x';
+    });
+}
+
+const fmtScale = v => v.toFixed(2);
+const fmtExplode = v => v.toFixed(2);
+
+setupFormAutoParam('formScaleX', formScaleXSlider, formScaleXValue, formScaleXAutoToggle,
+    formScaleXMinSlider, formScaleXMinInput, formScaleXMaxSlider, formScaleXMaxInput,
+    formScaleXSpeedSlider, formScaleXSpeedValue, formScaleXMinGroup, formScaleXMaxGroup, formScaleXSpeedGroup, fmtScale);
+
+setupFormAutoParam('formScaleY', formScaleYSlider, formScaleYValue, formScaleYAutoToggle,
+    formScaleYMinSlider, formScaleYMinInput, formScaleYMaxSlider, formScaleYMaxInput,
+    formScaleYSpeedSlider, formScaleYSpeedValue, formScaleYMinGroup, formScaleYMaxGroup, formScaleYSpeedGroup, fmtScale);
+
+setupFormAutoParam('formScaleZ', formScaleZSlider, formScaleZValue, formScaleZAutoToggle,
+    formScaleZMinSlider, formScaleZMinInput, formScaleZMaxSlider, formScaleZMaxInput,
+    formScaleZSpeedSlider, formScaleZSpeedValue, formScaleZMinGroup, formScaleZMaxGroup, formScaleZSpeedGroup, fmtScale);
+
+setupFormAutoParam('formExplode', formExplodeSlider, formExplodeValue, formExplodeAutoToggle,
+    formExplodeMinSlider, formExplodeMinInput, formExplodeMaxSlider, formExplodeMaxInput,
+    formExplodeSpeedSlider, formExplodeSpeedValue, formExplodeMinGroup, formExplodeMaxGroup, formExplodeSpeedGroup, fmtExplode);
+
 // Model preset selector
 modelPresetSelect.addEventListener('change', (e) => {
     const selectedPreset = e.target.value;
@@ -1767,6 +1912,30 @@ resetBtn.addEventListener('click', () => {
     config.synthStripesCount = 6;
     config.synthStripesSpeed = 2.0;
     config.synthStripesStartY = 0.5;
+    config.formScaleX = 1.0;
+    config.formScaleXAutoEnabled = false;
+    config.formScaleXMin = 0.5;
+    config.formScaleXMax = 2.0;
+    config.formScaleXSpeed = 1.0;
+    config.formScaleXAutoTime = 0;
+    config.formScaleY = 1.0;
+    config.formScaleYAutoEnabled = false;
+    config.formScaleYMin = 0.5;
+    config.formScaleYMax = 2.0;
+    config.formScaleYSpeed = 1.0;
+    config.formScaleYAutoTime = 0;
+    config.formScaleZ = 1.0;
+    config.formScaleZAutoEnabled = false;
+    config.formScaleZMin = 0.5;
+    config.formScaleZMax = 2.0;
+    config.formScaleZSpeed = 1.0;
+    config.formScaleZAutoTime = 0;
+    config.formExplode = 0;
+    config.formExplodeAutoEnabled = false;
+    config.formExplodeMin = 0;
+    config.formExplodeMax = 0.5;
+    config.formExplodeSpeed = 1.0;
+    config.formExplodeAutoTime = 0;
     morphTime = 0;
 
     loadSecondModel('torus');
@@ -1893,6 +2062,46 @@ resetBtn.addEventListener('click', () => {
     synthStripesStartYValueEl.textContent = '50%';
     initSynthStripes();
 
+    formScaleXSlider.value = 1.0;
+    formScaleXValue.textContent = '1.00';
+    formScaleXAutoToggle.textContent = 'Off';
+    formScaleXMinGroup.style.display = 'none';
+    formScaleXMaxGroup.style.display = 'none';
+    formScaleXSpeedGroup.style.display = 'none';
+    formScaleXMinSlider.value = 0.5; formScaleXMinInput.value = '0.50';
+    formScaleXMaxSlider.value = 2.0; formScaleXMaxInput.value = '2.00';
+    formScaleXSpeedSlider.value = 1.0; formScaleXSpeedValue.textContent = '1.0x';
+
+    formScaleYSlider.value = 1.0;
+    formScaleYValue.textContent = '1.00';
+    formScaleYAutoToggle.textContent = 'Off';
+    formScaleYMinGroup.style.display = 'none';
+    formScaleYMaxGroup.style.display = 'none';
+    formScaleYSpeedGroup.style.display = 'none';
+    formScaleYMinSlider.value = 0.5; formScaleYMinInput.value = '0.50';
+    formScaleYMaxSlider.value = 2.0; formScaleYMaxInput.value = '2.00';
+    formScaleYSpeedSlider.value = 1.0; formScaleYSpeedValue.textContent = '1.0x';
+
+    formScaleZSlider.value = 1.0;
+    formScaleZValue.textContent = '1.00';
+    formScaleZAutoToggle.textContent = 'Off';
+    formScaleZMinGroup.style.display = 'none';
+    formScaleZMaxGroup.style.display = 'none';
+    formScaleZSpeedGroup.style.display = 'none';
+    formScaleZMinSlider.value = 0.5; formScaleZMinInput.value = '0.50';
+    formScaleZMaxSlider.value = 2.0; formScaleZMaxInput.value = '2.00';
+    formScaleZSpeedSlider.value = 1.0; formScaleZSpeedValue.textContent = '1.0x';
+
+    formExplodeSlider.value = 0;
+    formExplodeValue.textContent = '0.00';
+    formExplodeAutoToggle.textContent = 'Off';
+    formExplodeMinGroup.style.display = 'none';
+    formExplodeMaxGroup.style.display = 'none';
+    formExplodeSpeedGroup.style.display = 'none';
+    formExplodeMinSlider.value = 0; formExplodeMinInput.value = '0.00';
+    formExplodeMaxSlider.value = 0.5; formExplodeMaxInput.value = '0.50';
+    formExplodeSpeedSlider.value = 1.0; formExplodeSpeedValue.textContent = '1.0x';
+
     speedXValue.textContent = '0.00x';
     speedYValue.textContent = '0.00x';
     speedZValue.textContent = '0.00x';
@@ -2014,6 +2223,21 @@ function renderScene(dt) {
 
     const dy = config.offsetY + Sequencer.getModOffset('offsetY');
 
+    function updateFormAuto(key, slider, valueEl, fmt) {
+        if (config[key + 'AutoEnabled']) {
+            config[key + 'AutoTime'] += dt * config[key + 'Speed'];
+            const sineValue = Math.sin(config[key + 'AutoTime'] * Math.PI);
+            config[key] = config[key + 'Min'] + (config[key + 'Max'] - config[key + 'Min']) * (sineValue + 1) / 2;
+            slider.value = config[key];
+            valueEl.textContent = fmt(config[key]);
+        }
+    }
+
+    updateFormAuto('formScaleX', formScaleXSlider, formScaleXValue, fmtScale);
+    updateFormAuto('formScaleY', formScaleYSlider, formScaleYValue, fmtScale);
+    updateFormAuto('formScaleZ', formScaleZSlider, formScaleZValue, fmtScale);
+    updateFormAuto('formExplode', formExplodeSlider, formExplodeValue, fmtExplode);
+
     let effectiveThickness = config.wireframeThickness;
     if (config.thicknessScaleEnabled) {
         const baseDistance = fovToFocal(60);
@@ -2096,14 +2320,19 @@ function renderScene(dt) {
     const effectiveColors = getEffectiveColors();
     const solidAmount = config.solidMode ? 1 : Sequencer.getSolidAmount();
     const distortAmt = Sequencer.getDistortAmount();
+    const fsx = config.formScaleX;
+    const fsy = config.formScaleY;
+    const fsz = config.formScaleZ;
+    const totalExplode = distortAmt + config.formExplode;
+    const needFormScale = fsx !== 1 || fsy !== 1 || fsz !== 1;
 
     function computeFaceNormal(model, face) {
         if (face.length < 3) return { x: 0, y: 0, z: 0 };
         const v0 = model.vs[face[0]];
         const v1 = model.vs[face[1]];
         const v2 = model.vs[face[2]];
-        const e1x = v1.x - v0.x, e1y = v1.y - v0.y, e1z = v1.z - v0.z;
-        const e2x = v2.x - v0.x, e2y = v2.y - v0.y, e2z = v2.z - v0.z;
+        const e1x = (v1.x - v0.x) * fsx, e1y = (v1.y - v0.y) * fsy, e1z = (v1.z - v0.z) * fsz;
+        const e2x = (v2.x - v0.x) * fsx, e2y = (v2.y - v0.y) * fsy, e2z = (v2.z - v0.z) * fsz;
         const nx = e1y * e2z - e1z * e2y;
         const ny = e1z * e2x - e1x * e2z;
         const nz = e1x * e2y - e1y * e2x;
@@ -2114,11 +2343,12 @@ function renderScene(dt) {
 
     function getVertex(model, vi, faceNormal) {
         const v = model.vs[vi];
-        if (distortAmt <= 0 || !faceNormal) return v;
+        const needExplode = totalExplode > 0 && faceNormal;
+        if (!needFormScale && !needExplode) return v;
         return {
-            x: v.x + faceNormal.x * distortAmt,
-            y: v.y + faceNormal.y * distortAmt,
-            z: v.z + faceNormal.z * distortAmt,
+            x: v.x * fsx + (needExplode ? faceNormal.x * totalExplode : 0),
+            y: v.y * fsy + (needExplode ? faceNormal.y * totalExplode : 0),
+            z: v.z * fsz + (needExplode ? faceNormal.z * totalExplode : 0),
         };
     }
 
@@ -2129,7 +2359,7 @@ function renderScene(dt) {
             for (const f of obj.model.fs) {
                 if (f.length < 3) continue;
 
-                const faceNormal = distortAmt > 0 ? computeFaceNormal(obj.model, f) : null;
+                const faceNormal = totalExplode > 0 ? computeFaceNormal(obj.model, f) : null;
                 const transformedVertices = [];
                 let allValid = true;
 
@@ -2200,7 +2430,7 @@ function renderScene(dt) {
         let edgeIdx = 0;
         for (const obj of objectsToRender) {
             for (const f of obj.model.fs) {
-                const faceNormal = distortAmt > 0 ? computeFaceNormal(obj.model, f) : null;
+                const faceNormal = totalExplode > 0 ? computeFaceNormal(obj.model, f) : null;
                 for (let i = 0; i < f.length; ++i) {
                     const a = getVertex(obj.model, f[i], faceNormal);
                     const b = getVertex(obj.model, f[(i + 1) % f.length], faceNormal);
