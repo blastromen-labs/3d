@@ -851,6 +851,7 @@ const formExplodeSpeedGroup = document.getElementById('formExplodeSpeedGroup');
 const modelPresetSelect = document.getElementById('modelPreset');
 const morphToggle = document.getElementById('morphToggle');
 const morphTargetSelect = document.getElementById('morphTarget');
+const morphTargetGroup = document.getElementById('morphTargetGroup');
 const morphSpeedSlider = document.getElementById('morphSpeedSlider');
 const morphSpeedValue = document.getElementById('morphSpeedValue');
 const morphStaySlider = document.getElementById('morphStaySlider');
@@ -1506,6 +1507,7 @@ modelPresetSelect.addEventListener('change', (e) => {
 morphToggle.addEventListener('click', () => {
     config.morphEnabled = !config.morphEnabled;
     morphToggle.textContent = config.morphEnabled ? 'On' : 'Off';
+    morphTargetGroup.style.display = config.morphEnabled ? '' : 'none';
     if (config.morphEnabled) {
         morphTime = 0;
         morphHoldTimer = 0;
@@ -2141,6 +2143,7 @@ resetBtn.addEventListener('click', () => {
     loadModel('cube');
     modelPresetSelect.value = 'cube';
     morphToggle.textContent = 'Off';
+    morphTargetGroup.style.display = 'none';
     morphTargetSelect.value = 'pyramid';
     morphSpeedSlider.value = 0.5;
     morphSpeedValue.textContent = '0.5x';
