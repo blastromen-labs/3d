@@ -630,6 +630,63 @@ const MODEL_PRESETS = {
         return { name: "Hand", vs, fs };
     })(),
 
+    triangleFrame: (() => {
+        const R = 0.3, r = 0.15, d = 0.06;
+        const angles = [Math.PI / 2, Math.PI * 7 / 6, Math.PI * 11 / 6];
+        const vs = [];
+        for (const a of angles) vs.push({ x: R * Math.cos(a), y: R * Math.sin(a), z: d });
+        for (const a of angles) vs.push({ x: r * Math.cos(a), y: r * Math.sin(a), z: d });
+        for (const a of angles) vs.push({ x: R * Math.cos(a), y: R * Math.sin(a), z: -d });
+        for (const a of angles) vs.push({ x: r * Math.cos(a), y: r * Math.sin(a), z: -d });
+        const fs = [];
+        for (let i = 0; i < 3; i++) {
+            const ni = (i + 1) % 3;
+            fs.push([i, i + 3, ni + 3, ni]);
+            fs.push([i + 6, ni + 6, ni + 9, i + 9]);
+            fs.push([i, i + 6, ni + 6, ni]);
+            fs.push([i + 3, ni + 3, ni + 9, i + 9]);
+        }
+        return { name: "Triangle Frame", vs, fs };
+    })(),
+
+    hexagonFrame: (() => {
+        const n = 6, R = 0.28, r = 0.17, d = 0.06;
+        const vs = [];
+        const angles = Array.from({ length: n }, (_, i) => (Math.PI / 2) + (2 * Math.PI * i) / n);
+        for (const a of angles) vs.push({ x: R * Math.cos(a), y: R * Math.sin(a), z: d });
+        for (const a of angles) vs.push({ x: r * Math.cos(a), y: r * Math.sin(a), z: d });
+        for (const a of angles) vs.push({ x: R * Math.cos(a), y: R * Math.sin(a), z: -d });
+        for (const a of angles) vs.push({ x: r * Math.cos(a), y: r * Math.sin(a), z: -d });
+        const fs = [];
+        for (let i = 0; i < n; i++) {
+            const ni = (i + 1) % n;
+            fs.push([i, i + n, ni + n, ni]);
+            fs.push([i + 2 * n, ni + 2 * n, ni + 3 * n, i + 3 * n]);
+            fs.push([i, i + 2 * n, ni + 2 * n, ni]);
+            fs.push([i + n, ni + n, ni + 3 * n, i + 3 * n]);
+        }
+        return { name: "Hexagon Frame", vs, fs };
+    })(),
+
+    squareFrame: (() => {
+        const n = 4, R = 0.25, r = 0.14, d = 0.06;
+        const vs = [];
+        const angles = Array.from({ length: n }, (_, i) => (Math.PI / 4) + (2 * Math.PI * i) / n);
+        for (const a of angles) vs.push({ x: R * Math.cos(a), y: R * Math.sin(a), z: d });
+        for (const a of angles) vs.push({ x: r * Math.cos(a), y: r * Math.sin(a), z: d });
+        for (const a of angles) vs.push({ x: R * Math.cos(a), y: R * Math.sin(a), z: -d });
+        for (const a of angles) vs.push({ x: r * Math.cos(a), y: r * Math.sin(a), z: -d });
+        const fs = [];
+        for (let i = 0; i < n; i++) {
+            const ni = (i + 1) % n;
+            fs.push([i, i + n, ni + n, ni]);
+            fs.push([i + 2 * n, ni + 2 * n, ni + 3 * n, i + 3 * n]);
+            fs.push([i, i + 2 * n, ni + 2 * n, ni]);
+            fs.push([i + n, ni + n, ni + 3 * n, i + 3 * n]);
+        }
+        return { name: "Square Frame", vs, fs };
+    })(),
+
     custom: {
         name: "Custom",
         vs: [

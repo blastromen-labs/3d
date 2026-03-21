@@ -65,6 +65,9 @@ const Sequencer = (() => {
         { id: 'octagonTube', label: 'Octagon Tube' },
         { id: 'penguin', label: 'Penguin' },
         { id: 'hand', label: 'Hand' },
+        { id: 'triangleFrame', label: 'Triangle Frame' },
+        { id: 'hexagonFrame', label: 'Hexagon Frame' },
+        { id: 'squareFrame', label: 'Square Frame' },
     ];
 
     const tracks = [
