@@ -140,10 +140,7 @@ function calculateCenter(vertices) {
     };
 }
 
-// Convert brightness (0-1) to color based on selected color
-function brightnessToColor(brightness, baseColor, contrast) {
-    // contrast: 0 = flat (exact selected color), 100 = full lighting range
-
+function brightnessToColor(brightness, baseColor, contrast, specular = 0) {
     brightness = Math.max(0, Math.min(1.0, brightness));
 
     const contrastFactor = contrast / 100;
@@ -158,9 +155,9 @@ function brightnessToColor(brightness, baseColor, contrast) {
     const g = parseInt(hex.substring(2, 4), 16);
     const b = parseInt(hex.substring(4, 6), 16);
 
-    const finalR = Math.floor(r * brightness);
-    const finalG = Math.floor(g * brightness);
-    const finalB = Math.floor(b * brightness);
+    const finalR = Math.min(255, Math.floor(r * brightness + 255 * specular));
+    const finalG = Math.min(255, Math.floor(g * brightness + 255 * specular));
+    const finalB = Math.min(255, Math.floor(b * brightness + 255 * specular));
 
     return `rgb(${finalR}, ${finalG}, ${finalB})`;
 }
@@ -387,6 +384,9 @@ let config = {
     offsetYMax: 0.5,
     offsetYSpeed: 1.0,
     offsetYAutoTime: 0,
+    metallicEnabled: false,
+    metallicShininess: 0.5,
+    metallicStrokes: false,
     morphEnabled: false,
     morphTarget: 'pyramid',
     morphSpeed: 0.5,
@@ -747,6 +747,13 @@ const gradientVibrancyGroup = document.getElementById('gradientVibrancyGroup');
 const strokeColorPicker = document.getElementById('strokeColorPicker');
 const contrastSlider = document.getElementById('contrastSlider');
 const contrastGroup = document.getElementById('contrastGroup');
+const metallicToggle = document.getElementById('metallicToggle');
+const metallicGroup = document.getElementById('metallicGroup');
+const metallicShininessSlider = document.getElementById('metallicShininessSlider');
+const metallicShininessValue = document.getElementById('metallicShininessValue');
+const metallicShininessGroup = document.getElementById('metallicShininessGroup');
+const metallicStrokesToggle = document.getElementById('metallicStrokesToggle');
+const metallicStrokesGroup = document.getElementById('metallicStrokesGroup');
 const masterHueSlider = document.getElementById('masterHueSlider');
 const masterHueValue = document.getElementById('masterHueValue');
 const masterHueAutoToggle = document.getElementById('masterHueAutoToggle');
@@ -1090,6 +1097,36 @@ solidToggle.addEventListener('click', () => {
     config.solidMode = !config.solidMode;
     solidToggle.textContent = config.solidMode ? 'Solid' : 'Wireframe';
     contrastGroup.style.display = config.solidMode ? '' : 'none';
+    metallicGroup.style.display = config.solidMode ? '' : 'none';
+    if (!config.solidMode) {
+        metallicShininessGroup.style.display = 'none';
+        metallicStrokesGroup.style.display = 'none';
+    } else if (config.metallicEnabled) {
+        metallicShininessGroup.style.display = '';
+        metallicStrokesGroup.style.display = '';
+    }
+});
+
+metallicToggle.addEventListener('click', () => {
+    config.metallicEnabled = !config.metallicEnabled;
+    metallicToggle.textContent = config.metallicEnabled ? 'On' : 'Off';
+    metallicToggle.classList.toggle('active', config.metallicEnabled);
+    metallicShininessGroup.style.display = config.metallicEnabled ? '' : 'none';
+    metallicStrokesGroup.style.display = config.metallicEnabled ? '' : 'none';
+    if (!config.metallicEnabled) config.metallicStrokes = false;
+    metallicStrokesToggle.textContent = config.metallicStrokes ? 'On' : 'Off';
+    metallicStrokesToggle.classList.toggle('active', config.metallicStrokes);
+});
+
+metallicStrokesToggle.addEventListener('click', () => {
+    config.metallicStrokes = !config.metallicStrokes;
+    metallicStrokesToggle.textContent = config.metallicStrokes ? 'On' : 'Off';
+    metallicStrokesToggle.classList.toggle('active', config.metallicStrokes);
+});
+
+metallicShininessSlider.addEventListener('input', (e) => {
+    config.metallicShininess = parseFloat(e.target.value) / 100;
+    metallicShininessValue.textContent = Math.round(config.metallicShininess * 100) + '%';
 });
 
 // Wireframe thickness control
@@ -2073,6 +2110,18 @@ resetBtn.addEventListener('click', () => {
     masterContrastValue.textContent = '100%';
     strokeColorPicker.value = '#000000';
     contrastSlider.value = 70;
+    config.metallicEnabled = false;
+    config.metallicShininess = 0.5;
+    config.metallicStrokes = false;
+    metallicToggle.textContent = 'Off';
+    metallicToggle.classList.remove('active');
+    metallicStrokesToggle.textContent = 'Off';
+    metallicStrokesToggle.classList.remove('active');
+    metallicGroup.style.display = 'none';
+    metallicShininessGroup.style.display = 'none';
+    metallicStrokesGroup.style.display = 'none';
+    metallicShininessSlider.value = 50;
+    metallicShininessValue.textContent = '50%';
     backgroundPicker.value = '#000000';
     BACKGROUND = '#000000';
     solidToggle.textContent = 'Wireframe';
@@ -2244,6 +2293,51 @@ function addGradientStops(grad, colors, applyColor) {
             grad.addColorStop(stop, applyColor(colors[i]));
         }
     }
+}
+
+function createMetallicFaceGradient(screenPoints, baseColor, face, shininess, contrast) {
+    const normal = face.normal;
+    const brightness = face.brightness;
+
+    const lx = 0.7036, ly = 0.5026, lz = 0.5026;
+    const nDotL = normal.x * lx + normal.y * ly + normal.z * lz;
+    const catchLight = Math.abs(nDotL);
+
+    const sign = nDotL >= 0 ? 1 : -1;
+    const rx = 2 * Math.abs(nDotL) * normal.x * sign - lx;
+    const ry = 2 * Math.abs(nDotL) * normal.y * sign - ly;
+
+    const dirLen = Math.sqrt(rx * rx + ry * ry) || 1;
+    const dx = rx / dirLen;
+    const dy = -ry / dirLen;
+
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const p of screenPoints) {
+        minX = Math.min(minX, p.x); minY = Math.min(minY, p.y);
+        maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y);
+    }
+
+    const size = Math.max(maxX - minX, maxY - minY);
+    if (size < 1) return brightnessToColor(brightness, baseColor, contrast);
+
+    const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+    const extent = size * 0.65;
+    const grad = ctx.createLinearGradient(
+        cx - dx * extent, cy - dy * extent,
+        cx + dx * extent, cy + dy * extent
+    );
+
+    const specPeak = catchLight * (0.4 + shininess * 0.6);
+    const dark = brightness * (0.05 + (1 - shininess) * 0.15);
+    const mid = brightness * (0.35 + (1 - shininess) * 0.2);
+
+    grad.addColorStop(0, brightnessToColor(dark, baseColor, contrast));
+    grad.addColorStop(0.3, brightnessToColor(mid, baseColor, contrast));
+    grad.addColorStop(0.55, brightnessToColor(brightness, baseColor, contrast, specPeak * 0.15));
+    grad.addColorStop(0.8, brightnessToColor(Math.min(1, brightness * 1.2), baseColor, contrast, specPeak));
+    grad.addColorStop(1.0, brightnessToColor(mid * 0.6, baseColor, contrast, specPeak * 0.1));
+
+    return grad;
 }
 
 function createFaceGradient(screenPoints, colors, brightness, contrast) {
@@ -2546,7 +2640,12 @@ function renderScene(dt) {
                 const contrastFactor = config.contrast / 100;
                 const baseBrightness = 0.4 - (contrastFactor * 0.35);
                 const directionalLight = 0.6 + (contrastFactor * 0.4);
-                const brightness = baseBrightness + (lightIntensity * directionalLight * depthBrightness);
+                let brightness = baseBrightness + (lightIntensity * directionalLight * depthBrightness);
+
+                if (config.metallicEnabled) {
+                    const shin = config.metallicShininess;
+                    brightness = Math.pow(brightness, 1.5 + shin * 2.5);
+                }
 
                 facesWithDepth.push({
                     vertices: transformedVertices,
@@ -2568,7 +2667,17 @@ function renderScene(dt) {
             });
 
             let faceColor;
-            if (usePaintedGrad) {
+            if (config.metallicEnabled) {
+                let baseColor;
+                if (config.gradientEnabled && effectiveColors.length > 1) {
+                    const t = face.faceIndex / Math.max(1, facesWithDepth.length - 1);
+                    baseColor = sampleGradientColor(effectiveColors, t);
+                } else {
+                    const ci = face.faceIndex % effectiveColors.length;
+                    baseColor = effectiveColors[ci];
+                }
+                faceColor = createMetallicFaceGradient(screenPoints, baseColor, face, config.metallicShininess, config.contrast);
+            } else if (usePaintedGrad) {
                 faceColor = createPaintedGradient(effectiveColors, face.brightness, config.contrast);
             } else if (useGlobalGrad) {
                 faceColor = createDirectionalGradient(globalGradBounds, effectiveColors, face.brightness, config.contrast);
@@ -2579,8 +2688,36 @@ function renderScene(dt) {
                 faceColor = brightnessToColor(face.brightness, effectiveColors[ci], config.contrast);
             }
 
+            let strokeColor = effectiveStrokeColor;
+            if (config.metallicStrokes) {
+                const n = face.normal;
+                const shin = config.metallicShininess;
+                const lx = 0.7036, ly = 0.5026, lz = 0.5026;
+                const nDotL = Math.abs(n.x * lx + n.y * ly + n.z * lz);
+                const fresnel = 1 - Math.abs(n.z);
+                const edgeLight = Math.pow(nDotL, 0.6) * 0.7 + Math.pow(fresnel, 1.5) * 0.5;
+                const intensity = Math.min(1, edgeLight * (0.3 + shin * 0.7));
+
+                let baseColor;
+                if (config.gradientEnabled && effectiveColors.length > 1) {
+                    const t = face.faceIndex / Math.max(1, facesWithDepth.length - 1);
+                    baseColor = sampleGradientColor(effectiveColors, t);
+                } else {
+                    const ci = face.faceIndex % effectiveColors.length;
+                    baseColor = effectiveColors[ci];
+                }
+                const hex = baseColor.replace('#', '');
+                const br = parseInt(hex.substring(0, 2), 16);
+                const bg = parseInt(hex.substring(2, 4), 16);
+                const bb = parseInt(hex.substring(4, 6), 16);
+                const sr = Math.min(255, Math.floor(br * 0.2 + 255 * intensity));
+                const sg = Math.min(255, Math.floor(bg * 0.2 + 255 * intensity));
+                const sb = Math.min(255, Math.floor(bb * 0.2 + 255 * intensity));
+                strokeColor = `rgb(${sr}, ${sg}, ${sb})`;
+            }
+
             ctx.globalAlpha = solidAmount;
-            polygon(screenPoints, faceColor, effectiveStrokeColor, effectiveThickness, true, solidAmount >= 1);
+            polygon(screenPoints, faceColor, strokeColor, effectiveThickness, true, solidAmount >= 1);
             ctx.globalAlpha = 1;
         }
     }
