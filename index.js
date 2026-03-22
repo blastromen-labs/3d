@@ -2567,7 +2567,7 @@ function renderScene(dt) {
             case 'bt': startPt = { x: cx, y: b.minY, z: cz }; endPt = { x: cx, y: b.maxY, z: cz }; break;
             case 'lr': startPt = { x: b.minX, y: cy, z: cz }; endPt = { x: b.maxX, y: cy, z: cz }; break;
             case 'rl': startPt = { x: b.maxX, y: cy, z: cz }; endPt = { x: b.minX, y: cy, z: cz }; break;
-            default:   startPt = { x: cx, y: b.maxY, z: cz }; endPt = { x: cx, y: b.minY, z: cz }; break;
+            default: startPt = { x: cx, y: b.maxY, z: cz }; endPt = { x: cx, y: b.minY, z: cz }; break;
         }
         const toScreen = (pt) => {
             const rotated = rotate_xyz(pt, currentAngleX, currentAngleY, currentAngleZ);
@@ -2595,7 +2595,7 @@ function renderScene(dt) {
             case 'bt': grad = ctx.createLinearGradient(0, maxY, 0, minY); break;
             case 'lr': grad = ctx.createLinearGradient(minX, 0, maxX, 0); break;
             case 'rl': grad = ctx.createLinearGradient(maxX, 0, minX, 0); break;
-            default:   grad = ctx.createLinearGradient(0, minY, 0, maxY); break;
+            default: grad = ctx.createLinearGradient(0, minY, 0, maxY); break;
         }
         addGradientStops(grad, colors, c => brightnessToColor(brightness, c, contrast));
         return grad;
