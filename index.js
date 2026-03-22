@@ -78,15 +78,19 @@ function line(p1, p2, thickness, color) {
     ctx.stroke();
 }
 
-function polygon(points, color, strokeColor, strokeWidth = 1, fill = true, stroke = true) {
-    if (points.length < 3) return;
-
+function tracePolygonPath(points) {
     ctx.beginPath();
     ctx.moveTo(points[0].x, points[0].y);
     for (let i = 1; i < points.length; i++) {
         ctx.lineTo(points[i].x, points[i].y);
     }
     ctx.closePath();
+}
+
+function polygon(points, color, strokeColor, strokeWidth = 1, fill = true, stroke = true) {
+    if (points.length < 3) return;
+
+    tracePolygonPath(points);
 
     if (fill) {
         ctx.fillStyle = color;
@@ -138,6 +142,26 @@ function calculateCenter(vertices) {
         y: cy / vertices.length,
         z: cz / vertices.length
     };
+}
+
+function getPointBounds(points) {
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const p of points) {
+        if (p.x < minX) minX = p.x;
+        if (p.y < minY) minY = p.y;
+        if (p.x > maxX) maxX = p.x;
+        if (p.y > maxY) maxY = p.y;
+    }
+    return { minX, minY, maxX, maxY };
+}
+
+function projectPointToGradientLine(point, start, end) {
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const lenSq = dx * dx + dy * dy;
+    if (lenSq < 0.0001) return 0.5;
+    const t = ((point.x - start.x) * dx + (point.y - start.y) * dy) / lenSq;
+    return Math.max(0, Math.min(1, t));
 }
 
 function brightnessToColor(brightness, baseColor, contrast, specular = 0) {
@@ -2311,11 +2335,7 @@ function createMetallicFaceGradient(screenPoints, baseColor, face, shininess, co
     const dx = rx / dirLen;
     const dy = -ry / dirLen;
 
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    for (const p of screenPoints) {
-        minX = Math.min(minX, p.x); minY = Math.min(minY, p.y);
-        maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y);
-    }
+    const { minX, minY, maxX, maxY } = getPointBounds(screenPoints);
 
     const size = Math.max(maxX - minX, maxY - minY);
     if (size < 1) return brightnessToColor(brightness, baseColor, contrast);
@@ -2327,27 +2347,98 @@ function createMetallicFaceGradient(screenPoints, baseColor, face, shininess, co
         cx + dx * extent, cy + dy * extent
     );
 
-    const specPeak = catchLight * (0.4 + shininess * 0.6);
-    const dark = brightness * (0.05 + (1 - shininess) * 0.15);
-    const mid = brightness * (0.35 + (1 - shininess) * 0.2);
+    const chrome = Math.pow(shininess, 2.4);
+    const hardReflection = Math.pow(Math.max(0, (shininess - 0.76) / 0.24), 1.8);
+    const broadSpec = Math.pow(catchLight, 0.85 - shininess * 0.35);
+    const focusedSpec = Math.pow(catchLight, 0.45 - shininess * 0.15);
+    const dark = brightness * (0.12 + (1 - shininess) * 0.10);
+    const mid = Math.min(1, brightness * (0.56 + shininess * 0.22) + broadSpec * 0.10);
+    const sheen = Math.min(1, brightness * (1.08 + shininess * 0.48) + broadSpec * (0.10 + chrome * 0.12));
+    const highlightBand = Math.min(1, brightness * (1.35 + shininess * 0.65) + broadSpec * (0.16 + chrome * 0.16));
+    const gloss = Math.min(1, 0.14 + broadSpec * (0.22 + shininess * 0.18) + chrome * 0.14);
+    const hotspot = Math.min(1, 0.28 + focusedSpec * (0.34 + shininess * 0.32) + chrome * 0.18);
+    const whiteStripe = Math.min(1, 0.18 + focusedSpec * (0.20 + chrome * 0.25) + hardReflection * 0.62);
+    const whiteCore = Math.min(1, 0.45 + focusedSpec * 0.15 + hardReflection * 0.85);
 
     grad.addColorStop(0, brightnessToColor(dark, baseColor, contrast));
-    grad.addColorStop(0.3, brightnessToColor(mid, baseColor, contrast));
-    grad.addColorStop(0.55, brightnessToColor(brightness, baseColor, contrast, specPeak * 0.15));
-    grad.addColorStop(0.8, brightnessToColor(Math.min(1, brightness * 1.2), baseColor, contrast, specPeak));
-    grad.addColorStop(1.0, brightnessToColor(mid * 0.6, baseColor, contrast, specPeak * 0.1));
+    grad.addColorStop(0.24, brightnessToColor(mid, baseColor, contrast));
+    grad.addColorStop(0.55, brightnessToColor(sheen, baseColor, contrast, gloss));
+    grad.addColorStop(0.82, brightnessToColor(highlightBand, baseColor, contrast, hotspot));
+    grad.addColorStop(0.865, brightnessToColor(Math.min(1, highlightBand + 0.12 + chrome * 0.10), baseColor, contrast, whiteStripe));
+    grad.addColorStop(0.885, brightnessToColor(1, baseColor, contrast, whiteCore));
+    grad.addColorStop(0.905, brightnessToColor(Math.min(1, highlightBand + 0.08), baseColor, contrast, whiteStripe * 0.85));
+    grad.addColorStop(1.0, brightnessToColor(mid * 0.7, baseColor, contrast, gloss * 0.18));
 
     return grad;
 }
 
+function createMetallicOverlayGradient(screenPoints, face, shininess) {
+    const normal = face.normal;
+
+    const lx = 0.7036, ly = 0.5026, lz = 0.5026;
+    const nDotL = normal.x * lx + normal.y * ly + normal.z * lz;
+    const catchLight = Math.abs(nDotL);
+
+    const sign = nDotL >= 0 ? 1 : -1;
+    const rx = 2 * Math.abs(nDotL) * normal.x * sign - lx;
+    const ry = 2 * Math.abs(nDotL) * normal.y * sign - ly;
+
+    const dirLen = Math.sqrt(rx * rx + ry * ry) || 1;
+    const dx = rx / dirLen;
+    const dy = -ry / dirLen;
+
+    const { minX, minY, maxX, maxY } = getPointBounds(screenPoints);
+    const size = Math.max(maxX - minX, maxY - minY);
+    if (size < 1) return null;
+
+    const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+    const extent = size * 0.65;
+    const grad = ctx.createLinearGradient(
+        cx - dx * extent, cy - dy * extent,
+        cx + dx * extent, cy + dy * extent
+    );
+
+    const chrome = Math.pow(shininess, 2.4);
+    const hardReflection = Math.pow(Math.max(0, (shininess - 0.76) / 0.24), 1.8);
+    const broadSpec = Math.pow(catchLight, 0.85 - shininess * 0.35);
+    const focusedSpec = Math.pow(catchLight, 0.45 - shininess * 0.15);
+    const edgeShadow = 0.05 + (1 - shininess) * 0.05;
+    const midShadow = edgeShadow * 0.45;
+    const gloss = Math.min(1, 0.12 + broadSpec * (0.12 + chrome * 0.12));
+    const highlight = Math.min(1, 0.26 + broadSpec * (0.22 + chrome * 0.20));
+    const hotspot = Math.min(1, 0.36 + focusedSpec * (0.18 + chrome * 0.20) + hardReflection * 0.18);
+    const hardWhite = Math.min(1, 0.12 + focusedSpec * (0.12 + chrome * 0.18) + hardReflection * 0.70);
+    const hardWhiteCore = Math.min(1, 0.20 + focusedSpec * 0.10 + hardReflection * 0.95);
+    const tailShadow = edgeShadow * 0.45 + broadSpec * 0.02;
+
+    grad.addColorStop(0, `rgba(0, 0, 0, ${edgeShadow.toFixed(3)})`);
+    grad.addColorStop(0.28, `rgba(0, 0, 0, ${midShadow.toFixed(3)})`);
+    grad.addColorStop(0.58, `rgba(255, 255, 255, ${gloss.toFixed(3)})`);
+    grad.addColorStop(0.82, `rgba(255, 255, 255, ${highlight.toFixed(3)})`);
+    grad.addColorStop(0.865, `rgba(255, 255, 255, ${hotspot.toFixed(3)})`);
+    grad.addColorStop(0.885, `rgba(255, 255, 255, ${hardWhite.toFixed(3)})`);
+    grad.addColorStop(0.9, `rgba(255, 255, 255, ${hardWhiteCore.toFixed(3)})`);
+    grad.addColorStop(0.915, `rgba(255, 255, 255, ${(hardWhite * 0.82).toFixed(3)})`);
+    grad.addColorStop(1, `rgba(0, 0, 0, ${tailShadow.toFixed(3)})`);
+
+    return grad;
+}
+
+function fillPolygonOverlay(points, fillStyle) {
+    if (!fillStyle || points.length < 3) return;
+
+    const { minX, minY, maxX, maxY } = getPointBounds(points);
+
+    ctx.save();
+    tracePolygonPath(points);
+    ctx.clip();
+    ctx.fillStyle = fillStyle;
+    ctx.fillRect(minX, minY, Math.max(1, maxX - minX), Math.max(1, maxY - minY));
+    ctx.restore();
+}
+
 function createFaceGradient(screenPoints, colors, brightness, contrast) {
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    for (const p of screenPoints) {
-        if (p.x < minX) minX = p.x;
-        if (p.y < minY) minY = p.y;
-        if (p.x > maxX) maxX = p.x;
-        if (p.y > maxY) maxY = p.y;
-    }
+    const { minX, minY, maxX, maxY } = getPointBounds(screenPoints);
     const grad = ctx.createLinearGradient(minX, minY, maxX, maxY);
     addGradientStops(grad, colors, c => brightnessToColor(brightness, c, contrast));
     return grad;
@@ -2523,8 +2614,9 @@ function renderScene(dt) {
         };
     }
 
-    const useGlobalGrad = config.gradientEnabled && config.gradientMode === 'global' && effectiveColors.length > 1;
-    const usePaintedGrad = config.gradientEnabled && config.gradientMode === 'painted' && effectiveColors.length > 1;
+    const gradientActive = config.gradientEnabled && effectiveColors.length > 1;
+    const useGlobalGrad = gradientActive && config.gradientMode === 'global';
+    const usePaintedGrad = gradientActive && config.gradientMode === 'painted';
     let globalGradBounds = null;
     let paintedBounds = null;
     if (useGlobalGrad || usePaintedGrad) {
@@ -2601,6 +2693,41 @@ function renderScene(dt) {
         return grad;
     }
 
+    function getGradientColorAtPoint(point, faceBounds) {
+        if (!gradientActive) return effectiveColors[0];
+
+        let t = 0.5;
+        if (usePaintedGrad && paintedGradStart && paintedGradEnd) {
+            t = projectPointToGradientLine(point, paintedGradStart, paintedGradEnd);
+        } else if (useGlobalGrad && globalGradBounds) {
+            switch (config.gradientDirection) {
+                case 'tb':
+                    t = projectPointToGradientLine(point, { x: 0, y: globalGradBounds.minY }, { x: 0, y: globalGradBounds.maxY });
+                    break;
+                case 'bt':
+                    t = projectPointToGradientLine(point, { x: 0, y: globalGradBounds.maxY }, { x: 0, y: globalGradBounds.minY });
+                    break;
+                case 'lr':
+                    t = projectPointToGradientLine(point, { x: globalGradBounds.minX, y: 0 }, { x: globalGradBounds.maxX, y: 0 });
+                    break;
+                case 'rl':
+                    t = projectPointToGradientLine(point, { x: globalGradBounds.maxX, y: 0 }, { x: globalGradBounds.minX, y: 0 });
+                    break;
+                default:
+                    t = projectPointToGradientLine(point, { x: 0, y: globalGradBounds.minY }, { x: 0, y: globalGradBounds.maxY });
+                    break;
+            }
+        } else {
+            t = projectPointToGradientLine(
+                point,
+                { x: faceBounds.minX, y: faceBounds.minY },
+                { x: faceBounds.maxX, y: faceBounds.maxY }
+            );
+        }
+
+        return sampleGradientColor(effectiveColors, t);
+    }
+
     if (solidAmount > 0) {
         const facesWithDepth = [];
 
@@ -2644,7 +2771,10 @@ function renderScene(dt) {
 
                 if (config.metallicEnabled) {
                     const shin = config.metallicShininess;
-                    brightness = Math.pow(brightness, 1.5 + shin * 2.5);
+                    const hardReflection = Math.pow(Math.max(0, (shin - 0.76) / 0.24), 1.8);
+                    const metallicPower = Math.max(0.32, 0.92 - shin * 0.42);
+                    const metallicLift = 0.05 + shin * 0.16 + hardReflection * 0.12;
+                    brightness = Math.min(1, Math.pow(brightness, metallicPower) + metallicLift);
                 }
 
                 facesWithDepth.push({
@@ -2665,23 +2795,24 @@ function renderScene(dt) {
                 p.y += dy;
                 return screen(p);
             });
+            const faceBounds = getPointBounds(screenPoints);
+            const faceCenterPoint = {
+                x: (faceBounds.minX + faceBounds.maxX) / 2,
+                y: (faceBounds.minY + faceBounds.maxY) / 2
+            };
+            const applyMetallicOverlay = config.metallicEnabled && gradientActive;
 
             let faceColor;
-            if (config.metallicEnabled) {
+            if (config.metallicEnabled && !gradientActive) {
                 let baseColor;
-                if (config.gradientEnabled && effectiveColors.length > 1) {
-                    const t = face.faceIndex / Math.max(1, facesWithDepth.length - 1);
-                    baseColor = sampleGradientColor(effectiveColors, t);
-                } else {
-                    const ci = face.faceIndex % effectiveColors.length;
-                    baseColor = effectiveColors[ci];
-                }
+                const ci = face.faceIndex % effectiveColors.length;
+                baseColor = effectiveColors[ci];
                 faceColor = createMetallicFaceGradient(screenPoints, baseColor, face, config.metallicShininess, config.contrast);
             } else if (usePaintedGrad) {
                 faceColor = createPaintedGradient(effectiveColors, face.brightness, config.contrast);
             } else if (useGlobalGrad) {
                 faceColor = createDirectionalGradient(globalGradBounds, effectiveColors, face.brightness, config.contrast);
-            } else if (config.gradientEnabled && effectiveColors.length > 1) {
+            } else if (gradientActive) {
                 faceColor = createFaceGradient(screenPoints, effectiveColors, face.brightness, config.contrast);
             } else {
                 const ci = face.faceIndex % effectiveColors.length;
@@ -2699,9 +2830,8 @@ function renderScene(dt) {
                 const intensity = Math.min(1, edgeLight * (0.3 + shin * 0.7));
 
                 let baseColor;
-                if (config.gradientEnabled && effectiveColors.length > 1) {
-                    const t = face.faceIndex / Math.max(1, facesWithDepth.length - 1);
-                    baseColor = sampleGradientColor(effectiveColors, t);
+                if (gradientActive) {
+                    baseColor = getGradientColorAtPoint(faceCenterPoint, faceBounds);
                 } else {
                     const ci = face.faceIndex % effectiveColors.length;
                     baseColor = effectiveColors[ci];
@@ -2717,7 +2847,15 @@ function renderScene(dt) {
             }
 
             ctx.globalAlpha = solidAmount;
-            polygon(screenPoints, faceColor, strokeColor, effectiveThickness, true, solidAmount >= 1);
+            if (applyMetallicOverlay) {
+                polygon(screenPoints, faceColor, strokeColor, effectiveThickness, true, false);
+                fillPolygonOverlay(screenPoints, createMetallicOverlayGradient(screenPoints, face, config.metallicShininess));
+                if (solidAmount >= 1) {
+                    polygon(screenPoints, faceColor, strokeColor, effectiveThickness, false, true);
+                }
+            } else {
+                polygon(screenPoints, faceColor, strokeColor, effectiveThickness, true, solidAmount >= 1);
+            }
             ctx.globalAlpha = 1;
         }
     }
